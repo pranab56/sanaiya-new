@@ -1,9 +1,46 @@
 "use client";
 
 import { useGetInvoiceQuery } from "@/utils/baseApi";
+import { baseURL } from "@/utils/BaseUrl";
 import Image from 'next/image';
+import { useParams, useSearchParams } from 'next/navigation';
 
-const page = () => {
+// Define types for the invoice data
+interface WorkItem {
+  work: {
+    code: string;
+    title: {
+      ar: string;
+      en: string;
+    };
+  };
+  quantity: number;
+  cost: number;
+  finalCost: number;
+}
+
+interface SparePartItem {
+  code: string;
+  itemName: string;
+  quantity: number;
+  cost: number;
+  finalCost: number;
+}
+
+
+
+
+
+const Page = () => {
+  const params = useParams();
+  const searchParams = useSearchParams();
+
+  const id = params.id;
+  const providerWorkShopId = searchParams.get("providerWorkShopId");
+
+  console.log("id", id);
+  console.log("providerWorkShopId", providerWorkShopId);
+
   const images = [
     "/icons/footerImage/image1.png",
     "/icons/footerImage/image2.png",
@@ -17,8 +54,14 @@ const page = () => {
     "/icons/footerImage/image10.png",
   ];
 
-  const { data } = useGetInvoiceQuery({});
-  console.log("invoice data", data)
+  const { data, isLoading } = useGetInvoiceQuery({ id: id, providerWorkShopId: providerWorkShopId });
+
+  if (isLoading) return <div className='h-screen flex justify-center items-center'>Loading...</div>;
+
+  if (!data?.data) return <div>No invoice data available</div>;
+
+  const invoiceData = data.data;
+
 
   return (
     <div className="w-full max-w-[210mm] mx-auto flex flex-col gap-2 bg-white p-6 border border-gray-50 print:max-w-[210mm] print:mx-0">
@@ -30,32 +73,36 @@ const page = () => {
             width={1000}
             className='w-24 h-24 print:w-24 print:h-24'
             alt='Logo One'
+            priority
           />
         </div>
         <div className="shrink-0">
-          <Image
-            src={"/icons/logoTwo.png"}
-            height={1000}
-            width={1000}
-            className='w-24 h-24 print:w-24 print:h-24'
-            alt='Logo One'
-          />
+          {invoiceData?.invoiceQRLink && (
+            <Image
+              src={baseURL + invoiceData.invoiceQRLink}
+              height={1000}
+              width={1000}
+              className='w-24 h-24 print:w-24 print:h-24'
+              alt='QR Code'
+              priority
+            />
+          )}
         </div>
-        <div className="flex-1 text-right print:text-right" dir="rtl">
+        <div className="flex-1 text-right print:text-right">
           <h1 className="text-2xl font-bold text-gray-900 mb-2 print:text-2xl">
-            مركز محمد لصيانة السيارات
+            {invoiceData?.providerWorkShopId?.workshopNameArabic || 'N/A'}
           </h1>
           <p className="text-base mb-1 print:text-base">
-            مؤسسة محمد للصيانة التجارية
+            {invoiceData?.providerWorkShopId?.workshopNameEnglish || 'N/A'}
           </p>
           <p className="text-xs font-normal mb-3 print:text-xs">
-            سجل تجاري رقم : CR No
+            CR No : {invoiceData?.providerWorkShopId?.crn || 'N/A'}
           </p>
           <p className="text-xs font-normal mb-3 print:text-xs">
-            سجل تجاري رقم : VAT No
+            VAT No : {invoiceData?.providerWorkShopId?.taxVatNumber || 'N/A'}
           </p>
           <p className="text-xs font-normal mb-3 print:text-xs">
-            سجل تجاري رقم : iBan No
+            iBan No : {invoiceData?.providerWorkShopId?.bankAccountNumber || 'N/A'}
           </p>
         </div>
       </div>
@@ -67,14 +114,16 @@ const page = () => {
             <h2 className="text-center text-2xl font-bold mb-6 print:text-2xl">فاتورة ضريبية مبسطة</h2>
 
             <div className="space-y-3 print:space-y-3">
-              <div className="flex justify-start items-center gap-5 print:gap-5">
-                <span className="text-gray-700 print:text-gray-700">invoice no.</span>
-                <span className="text-red-600 font-semibold print:text-red-600">رقم الفاتورة</span>
+              <div className="flex justify-start items-center gap-2 print:gap-5">
+                <span className="text-gray-700  print:text-gray-700">invoice no.</span>
+                <span className="text-red-600 text-xs font-semibold print:text-red-600">{invoiceData?._id || 'N/A'}</span>
               </div>
 
-              <div className="flex justify-start items-center gap-5 print:gap-5">
+              <div className="flex justify-start items-center gap-2 print:gap-5">
                 <span className="text-gray-700 print:text-gray-700">invoice date</span>
-                <span className="text-red-600 font-semibold print:text-red-600">تاريخ الفاتورة</span>
+                <span className="text-red-600 text-xs font-semibold print:text-red-600">
+                  {invoiceData?.createdAt ? new Date(invoiceData.createdAt).toLocaleDateString("en-US") : 'N/A'}
+                </span>
               </div>
             </div>
           </div>
@@ -82,7 +131,9 @@ const page = () => {
 
         {/* Payment Type */}
         <div className="text-center mb-8 print:mb-8">
-          <span className="text-2xl font-bold text-red-600 print:text-2xl">Cash / Postpaid</span>
+          <span className="text-2xl font-bold text-red-600 print:text-2xl">
+            {invoiceData?.paymentMethod || 'N/A'} / {invoiceData?.paymentStatus || 'N/A'}
+          </span>
         </div>
 
         {/* Vehicle Information Bar */}
@@ -91,21 +142,24 @@ const page = () => {
           <section className="bg-gray-200 rounded-sm  flex items-center justify-between w-full sm:w-9/12 px-3 print:w-9/12">
             <div className="flex items-center gap-6 print:gap-6">
               {/* Toyota Logo */}
-              <div className="bg-white rounded-full p-4 print:p-4">
-                <svg className="w-16 h-16 print:w-16 print:h-16" viewBox="0 0 192 192" fill="none">
-                  <ellipse cx="96" cy="96" rx="90" ry="90" fill="white" />
-                  <path d="M96 20C51.82 20 16 55.82 16 100s35.82 80 80 80 80-35.82 80-80-35.82-80-80-80zm0 144c-35.35 0-64-28.65-64-64s28.65-64 64-64 64 28.65 64 64-28.65 64-64 64z" fill="#C0C0C0" />
-                  <path d="M96 50c-8.284 0-15 6.716-15 15v62c0 8.284 6.716 15 15 15s15-6.716 15-15V65c0-8.284-6.716-15-15-15z" fill="#C0C0C0" />
-                  <path d="M141 85c-6.075-4.413-14.563-3.038-18.976 3.037L96 122.963 69.976 88.037C65.563 81.962 57.075 80.587 51 85c-6.075 4.413-7.45 12.901-3.037 18.976l32 44c5.25 7.219 18.824 7.219 24.074 0l32-44c4.413-6.075 3.038-14.563-3.037-18.976z" fill="#C0C0C0" />
-                </svg>
+              <div className="print:p-4">
+                {invoiceData?.car?.brand?.image && (
+                  <Image
+                    src={baseURL + invoiceData.car.brand.image}
+                    height={1000}
+                    width={1000}
+                    className='w-14 h-14 py-2'
+                    alt='Brand Logo'
+                  />
+                )}
               </div>
 
-              <div className="text-xl font-bold print:text-xl">TOYOTA</div>
+              <div className="text-xl font-bold print:text-xl">{invoiceData?.car?.brand?.title || 'N/A'}</div>
             </div>
 
-            <div className="text-xl font-bold print:text-xl">PRADO</div>
+            <div className="text-xl font-bold print:text-xl">{invoiceData?.car?.model?.title || 'N/A'}</div>
 
-            <div className="text-xl font-bold print:text-xl">2020</div>
+            <div className="text-xl font-bold print:text-xl">{invoiceData?.car?.year || 'N/A'}</div>
           </section>
 
           <section className='w-full sm:w-4/12 print:w-4/12 mt-4 sm:mt-0 print:mt-0'>
@@ -113,9 +167,9 @@ const page = () => {
             <div className="">
               <div className="flex flex-col gap-2 print:gap-2">
                 {/* Top Section - KW Number */}
-                <div className="border-2 border-gray-500 rounded-sm bg-white px-1 py-2 print:py-2">
+                <div className={`border-2 border-gray-500 rounded-sm bg-white px-1 ${invoiceData?.car?.plateNumberForInternational ? "py-2" : "py-4"}`}>
                   <div className="text-md text-center font-black tracking-wider print:text-md">
-                    KW-695048
+                    {invoiceData?.car?.plateNumberForInternational}
                   </div>
                 </div>
 
@@ -127,37 +181,39 @@ const page = () => {
                       {/* Top Row */}
                       <div className="border-b-3 border-gray-600 flex print:flex">
                         <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
-                          <span className="text-md font-bold print:text-md">6430</span>
+                          <span className="text-md font-bold print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberArabic || 'N/A'}</span>
                         </div>
-                        <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
-                          <span className="text-md font-bold print:text-md" style={{ fontFamily: 'Arial' }}>د ق ط</span>
+                        <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 ">
+                          <span className="text-md font-bold print:text-md" style={{ fontFamily: 'Arial' }}>
+                            {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[1] || 'N/A'}
+                          </span>
                         </div>
                       </div>
 
                       {/* Bottom Row */}
                       <div className="flex print:flex">
                         <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
-                          <span className="text-md font-bold print:text-md">6430</span>
+                          <span className="text-md font-bold print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberEnglish || 'N/A'}</span>
                         </div>
                         <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
-                          <span className="text-md font-bold tracking-wide print:text-md">TGD</span>
+                          <span className="text-md font-bold tracking-wide print:text-md">
+                            {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[0] || 'N/A'}
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     {/* Right Column - Saudi Emblem */}
                     <div className=" bg-white flex flex-col items-center justify-center   print:flex-col">
-                      {/* Saudi Emblem - Palm tree and crossed swords */}
-                      <div className="text-md print:text-md">🌴</div>
-                      <div className="text-xs font-bold text-center leading-tight print:text-xs">
-                        <div>السعودية</div>
-                      </div>
-                      <div className="flex flex-col gap-0.5 text-md font-bold print:text-md">
-                        <div>K</div>
-                        <div>S</div>
-                        <div>A</div>
-                      </div>
-                      <div className="w-4 h-4 bg-black rounded-full print:w-4 print:h-4"></div>
+                      {invoiceData?.car?.plateNumberForSaudi?.symbol?.image && (
+                        <Image
+                          src={baseURL + invoiceData.car.plateNumberForSaudi.symbol.image}
+                          height={10000}
+                          width={10000}
+                          className='w-10 h-full'
+                          alt='Saudi Emblem'
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -171,18 +227,18 @@ const page = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-8 print:flex-row print:gap-8">
           {/* Customer Name - Right Side */}
           <div className="flex items-center gap-4 print:gap-4">
-            <span className="text-gray-900 font-semibold print:text-gray-900">VAT -3xxxxxxxxxxxxx3</span>
-            <span className="text-gray-700 font-medium print:text-gray-700">الرقم الضريبي</span>
+            <span className="text-gray-900 font-semibold print:text-gray-900 text-xs">VAT -{invoiceData?.providerWorkShopId?.taxVatNumber || 'N/A'}</span>
+            <span className="text-gray-700 font-medium print:text-gray-700 text-xs">الرقم الضريبي</span>
           </div>
 
           <div className="flex items-center gap-4 print:gap-4">
-            <span className="text-gray-900 font-semibold print:text-gray-900">966-5xxxxxxxx</span>
+            <span className="text-gray-900 font-semibold print:text-gray-900">{invoiceData?.contact || 'N/A'}</span>
             <span className="text-gray-700 font-medium print:text-gray-700">الجوال</span>
           </div>
 
           <div className="flex items-center gap-4 print:gap-4">
             <span className="text-gray-900 font-semibold print:text-gray-900">costumer name</span>
-            <span className="text-gray-700 font-medium print:text-gray-700">العميل</span>
+            <span className="text-gray-700 font-medium print:text-gray-700">{invoiceData?.customerInvoiceName || 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -213,16 +269,27 @@ const page = () => {
               </tr>
             </thead>
             <tbody>
-              {[...Array(4)].map((_, index) => (
-                <tr key={index} className="bg-gray-100 print:bg-gray-100">
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
+              {invoiceData?.worksList && invoiceData.worksList.length > 0 ? (
+                invoiceData.worksList.map((item: WorkItem, index: number) => (
+                  <tr key={index} className="bg-gray-100 print:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{index + 1}</td>
+                    <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.work.code || "N/A"}</td>
+                    <td className="border text-xs border-gray-300 text-center px-4 py-6 print:px-4 print:py-6">
+                      {item.work.title.ar} <br />
+                      {item.work.title.en}
+                    </td>
+                    <td className="border border-gray-300 text-center px-4 py-6 print:px-4 print:py-6">{item.quantity || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.cost || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.finalCost || "N/A"}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="border border-gray-300 px-4 py-8 text-center print:px-4 print:py-8">
+                    <div className="text-gray-500 italic">No work items available</div>
+                  </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -251,22 +318,29 @@ const page = () => {
               </tr>
             </thead>
             <tbody>
-              {[...Array(2)].map((_, index) => (
-                <tr key={index} className="bg-gray-100 print:bg-gray-100">
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
-                  <td className="border border-gray-300 px-4 py-6 print:px-4 print:py-6"></td>
+              {invoiceData?.sparePartsList && invoiceData.sparePartsList.length > 0 ? (
+                invoiceData.sparePartsList.map((item: SparePartItem, index: number) => (
+                  <tr key={index} className="bg-gray-100 print:bg-gray-100">
+                    <td className="border border-gray-300 text-center px-4 py-6 print:px-4 print:py-6">{index + 1}</td>
+                    <td className="border border-gray-300 px-4 text-center py-6 print:px-4 print:py-6">{item.code || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.itemName || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.quantity || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.cost || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.finalCost || "N/A"}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="border border-gray-300 px-4 py-8 text-center print:px-4 print:py-8">
+                    <div className="text-gray-500 italic">No spare parts available</div>
+                  </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
       {/* ------------------------------------------------ */}
-
 
       <div className="print:overflow-visible">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:grid-cols-2">
@@ -308,19 +382,23 @@ const page = () => {
           {/* Left Section - Invoice Totals */}
           <div className="space-y-3 print:space-y-3">
             {/* Total of spare parts */}
-            <div className="bg-[#CB3640] text-white p-2 flex gap-4 items-center rounded mb-10 print:mb-10 print:gap-4">
+            <div className="bg-[#CB3640] text-white p-2 flex gap-4 items-center rounded mb-10 print:mb-10 print:gap-4 ">
               <span className="text-2xl font-bold print:text-2xl">
                 <Image
                   src={"/icons/Symbol.png"}
                   height={1000}
                   width={1000}
                   className='h-9 w-9 text-black print:h-11 print:w-10'
-                  alt=""
+                  alt="Symbol"
                 />
               </span>
-              <div className=" flex items-center gap-3 print:gap-3">
-                <div className="text-base print:text-lg">(Total of spare parts)</div>
-                <div className="text-base font-bold print:text-lg">اجمالي مبلغ قطع الغيار</div>
+              <div className=" flex items-center  gap-6 print:gap-3">
+                <div className="text-lg print:text-lg">({invoiceData?.totalCostOfSparePartsExcludingTax || 0})</div>
+                <div className="text-sm font-medium print:text-lg w-full">
+                  <span className='w-full'> اجمالي مبلغ قطع الغيار</span><br />
+                  <span>Total of spare parts</span>
+
+                </div>
               </div>
             </div>
             <div className="bg-gray-100 p-2 font-medium flex gap-4 items-center rounded print:gap-4">
@@ -330,12 +408,15 @@ const page = () => {
                   height={1000}
                   width={1000}
                   className='h-9 w-9 text-black print:h-11 print:w-10'
-                  alt=""
+                  alt="Symbol"
                 />
               </span>
-              <div className=" flex items-center gap-3 print:gap-3">
-                <div className="text-base print:text-lg">(Taxable amount)</div>
-                <div className="text-base font-bold print:text-lg">المبلغ الخاضع للضريبة</div>
+              <div className=" flex items-center gap-6 print:gap-3">
+                <div className="text-lg print:text-lg">({invoiceData?.totalCostOfWorkShopExcludingTax || 0})</div>
+                <div className="text-sm font-medium print:text-lg w-full">
+                  <span>المبلغ الخاضع للضريب</span> <br />
+                  <span>Taxable amount </span>
+                </div>
               </div>
             </div>
 
@@ -346,12 +427,15 @@ const page = () => {
                   height={1000}
                   width={1000}
                   className='h-9 w-9 text-black print:h-11 print:w-10'
-                  alt=""
+                  alt="Symbol"
                 />
               </span>
-              <div className=" flex items-center gap-3 print:gap-3">
-                <div className="text-base print:text-lg">(Discount)</div>
-                <div className="text-base font-bold print:text-lg">الخصم قبل الضريبة</div>
+              <div className=" flex items-center gap-6 print:gap-3">
+                <div className="text-lg print:text-lg"> ({invoiceData?.finalDiscountInFlatAmount || 0})</div>
+                <div className="text-sm font-medium print:text-lg w-full">
+                  <span>الخصم قبل الضريبة</span> <br />
+                  <span>Discount</span>
+                </div>
               </div>
             </div>
 
@@ -362,15 +446,17 @@ const page = () => {
                   height={1000}
                   width={1000}
                   className='h-9 w-9 text-black print:h-11 print:w-10'
-                  alt=""
+                  alt="Symbol"
                 />
               </span>
-              <div className=" flex items-center gap-3 print:gap-3">
-                <div className="text-base print:text-lg">(VAT amount)</div>
-                <div className="text-base font-bold print:text-lg">(VAT 15%)الضريبة</div>
+              <div className=" flex items-center gap-6 print:gap-3">
+                <div className="text-lg print:text-lg">({invoiceData?.taxAmount || 0})</div>
+                <div className="text-sm font-medium print:text-lg w-full">
+                  <span>(VAT%)الضريبة</span><br />
+                  <span>VAT amount</span>
+                </div>
               </div>
             </div>
-
 
             <div className="bg-[#1771B7] text-white p-2 flex gap-4 items-center rounded print:gap-4">
               <span className="text-2xl font-bold print:text-2xl">
@@ -379,23 +465,22 @@ const page = () => {
                   height={1000}
                   width={1000}
                   className='h-9 w-9 text-black print:h-11 print:w-10'
-                  alt=""
+                  alt="Symbol"
                 />
               </span>
-              <div className=" flex items-center gap-3 print:gap-3">
-                <div className="text-base print:text-lg">(Total including tax)</div>
-                <div className="text-base font-bold print:text-lg">الإجمالي شامل الضريبة</div>
+              <div className=" flex items-center gap-6 print:gap-3">
+                <div className="text-lg print:text-lg">({invoiceData?.totalCostIncludingTax || 0})</div>
+                <div className="text-sm font-medium print:text-lg w-full">
+                  <span>الإجمالي شامل الضريبة</span><br />
+                  <span>Total including tax</span>
+                </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
-
       {/* ------------------------------------------------ */}
-
-
 
       <section className="relative w-full h-20 overflow-hidden print:h-24">
         {/* RIGHT FULL WIDTH SECTION */}
@@ -406,7 +491,7 @@ const page = () => {
               <Image
                 key={index}
                 src={image}
-                alt=""
+                alt={`Footer image ${index + 1}`}
                 width={1000}
                 height={1000}
                 className="w-14 h-7 object-contain print:w-14 print:h-12"
@@ -417,19 +502,19 @@ const page = () => {
           {/* Red Bar */}
           <div className="bg-[#CB3640] flex items-center justify-between px-10 h-1/2 pl-[32%] print:pl-[32%]">
             <h1 className="text-base font-medium text-white print:text-base">
-              966-5xxxxxxxx
+              {invoiceData?.client?.clientId?.contact || 'N/A'}
             </h1>
 
             <Image
               src="/icons/footerCommunications.png"
-              alt=""
+              alt="Footer communications"
               width={1000}
               height={1000}
               className="h-6 w-auto print:h-7"
             />
 
             <h1 className="text-base font-medium text-white print:text-base">
-              Riyadh - old Industrial - ali st.
+              {data?.data?.providerWorkShopId?.address || "Riyadh - old Industrial - ali st."}
             </h1>
           </div>
         </div>
@@ -449,4 +534,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

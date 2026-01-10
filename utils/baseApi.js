@@ -9,20 +9,35 @@ export const baseApi = createApi({
   endpoints: (builder) => ({
     // GET request
     getInvoice: builder.query({
-      query: () => "/invoices/694beb54eeca164534ef6693?providerWorkShopId=692fbff4c1a36f45b4d46dc1", // just URL, GET is default
+      query: ({ id, providerWorkShopId }) => `/invoices/${id}?providerWorkShopId=${providerWorkShopId}`, // just URL, GET is default
       providesTags: ["Example"],
     }),
 
-    // // POST/PUT request (mutation)
-    // updateExample: builder.mutation({
-    //   query: (data) => ({
-    //     url: "/example",
-    //     method: "POST", // or "PUT"
-    //     body: data,      // body goes here
-    //   }),
-    //   invalidatesTags: ["Example"], // to refresh cache
+    // getReport: builder.query({
+    //   query: () => "/reports/?endDate=2025-12-13&startDate=2025-9-13&isReleased=true&lang=ar&noOfCars=true", // just URL, GET is default
+    //   headers: {
+    //     authorization: `bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MmZjODAzYzFhMzZmNDViNGQ0NmVkNiIsInJvbGUiOiJXT1JLU0hPUF9PV05FUiIsImVtYWlsIjoiZmFoZHR2QGdtYWlsLmNvbSIsImNvbnRhY3QiOiIrOTY2NTAzMzQzMDAwIiwiZGV2aWNlSWQiOiIiLCJ3b3JrU2hvcHMiOlsiNjkyZmM5MTljMWEzNmY0NWI0ZDQ2ZWVhIl0sImlhdCI6MTc2Nzk1MDYzNiwiZXhwIjoxNzcwNTQyNjM2fQ.vGaTUIDnZnc1kZqQAyuTP1WPMUeOSuPuGN789Na52N8`,
+    //     // "Content-Type": "application/json",
+
+    //   },
+    //   providesTags: ["Example"],
     // }),
+
+
+    getReport: builder.query({
+      query: ({ startDate, endDate, providerWorkShopId, lang, isReleased, token }) => ({
+        url: `/reports?startDate=${startDate}&endDate=${endDate}&isReleased=${isReleased}&lang=${lang}&providerWorkShopId=${providerWorkShopId}`,
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }),
+    }),
+
+
+
+
   }),
 });
 
-export const { useGetInvoiceQuery } = baseApi;
+export const { useGetInvoiceQuery, useGetReportQuery } = baseApi;
