@@ -58,7 +58,7 @@ const Page = () => {
 
   if (isLoading) return <div className='h-screen flex justify-center items-center'>Loading...</div>;
 
-  if (!data?.data) return <div>No invoice data available</div>;
+  if (!data?.data) return <div className='h-screen flex justify-center items-center'>No invoice data available</div>;
 
   const invoiceData = data.data;
 
