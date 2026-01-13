@@ -21,6 +21,8 @@ export default function Reports() {
     token,
   });
 
+  
+
   const reportData = data?.data;
 
   function formatDateToDDMMYYYY(dateStr: string | undefined | null): string {
@@ -184,7 +186,7 @@ export default function Reports() {
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path
+          <path
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
