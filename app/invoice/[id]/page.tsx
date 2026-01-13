@@ -54,6 +54,7 @@ const Page = () => {
 
   const { data, isLoading } = useGetInvoiceQuery({ id: id, providerWorkShopId: providerWorkShopId });
 
+
   if (isLoading) return <div className='h-screen flex justify-center items-center'>Loading...</div>;
 
   if (!data?.data) return <div className='h-screen flex justify-center items-center'>No invoice data available</div>;
@@ -230,13 +231,13 @@ const Page = () => {
           </div>
 
           <div className="flex items-center gap-4 print:gap-4">
-            <span className="text-gray-900 font-semibold print:text-gray-900">{invoiceData?.contact || 'N/A'}</span>
+            <span className="text-gray-900 font-semibold print:text-gray-900">{invoiceData?.client?.clientId?.contact || 'N/A'}</span>
             <span className="text-gray-700 font-medium print:text-gray-700">الجوال</span>
           </div>
 
           <div className="flex items-center gap-4 print:gap-4">
-            <span className="text-gray-900 font-semibold print:text-gray-900">costumer name</span>
             <span className="text-gray-700 font-medium print:text-gray-700">{invoiceData?.customerInvoiceName || 'N/A'}</span>
+            <span className="text-gray-900 font-semibold print:text-gray-900">اسم العميل</span>
           </div>
         </div>
       </div>
@@ -338,7 +339,7 @@ const Page = () => {
           </table>
         </div>
       </div>
-      
+
       {/* ------------------------------------------------ */}
 
       <div className="print:overflow-visible">
@@ -413,7 +414,7 @@ const Page = () => {
               <div className=" flex items-center gap-6 print:gap-3">
                 <div className="text-lg print:text-lg">({invoiceData?.totalCostOfWorkShopExcludingTax || 0})</div>
                 <div className="text-sm font-medium print:text-lg w-full">
-                  <span>المبلغ الخاضع للضريب</span> <br />
+                  <span>المبلغ الخاضع للضريبة</span> <br />
                   <span>Taxable amount </span>
                 </div>
               </div>
@@ -451,7 +452,7 @@ const Page = () => {
               <div className=" flex items-center gap-6 print:gap-3">
                 <div className="text-lg print:text-lg">({invoiceData?.taxAmount || 0})</div>
                 <div className="text-sm font-medium print:text-lg w-full">
-                  <span>(VAT%)الضريبة</span><br />
+                  <span>(15%)الضريبة</span><br />
                   <span>VAT amount</span>
                 </div>
               </div>
@@ -486,7 +487,7 @@ const Page = () => {
         <div className="absolute inset-0 w-full print:w-full">
           {/* Logos */}
           <div className="flex items-center justify-between px-10 h-1/2 opacity-40 gap-2 pl-[29%] py-2 print:pl-[29%] print:py-2">
-            {images.map((image, index) => (
+            {/* {images.map((image, index) => (
               <Image
                 key={index}
                 src={image}
@@ -495,7 +496,7 @@ const Page = () => {
                 height={1000}
                 className="w-14 h-7 object-contain print:w-14 print:h-12"
               />
-            ))}
+            ))} */}
           </div>
 
           {/* Red Bar */}
