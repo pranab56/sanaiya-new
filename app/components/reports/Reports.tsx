@@ -175,7 +175,7 @@ export default function Reports() {
       <div className="no-print fixed top-4 right-4 z-50">
         <button
           onClick={handleDownloadPDF}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow-lg transition-colors duration-200 flex items-center gap-2"
+          className="bg-blue-300 cursor-pointer hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow-lg transition-colors duration-200 flex items-center gap-2"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
