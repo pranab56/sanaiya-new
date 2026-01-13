@@ -32,7 +32,7 @@ export const baseApi = createApi({
           Authorization: `Bearer ${token}`,
         },
       }),
-    }),
+     }),
 
 
 

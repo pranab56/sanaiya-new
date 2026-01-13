@@ -38,8 +38,6 @@ const Page = () => {
   const id = params.id;
   const providerWorkShopId = searchParams.get("providerWorkShopId");
 
-  console.log("id", id);
-  console.log("providerWorkShopId", providerWorkShopId);
 
   const images = [
     "/icons/footerImage/image1.png",
@@ -340,6 +338,7 @@ const Page = () => {
           </table>
         </div>
       </div>
+      
       {/* ------------------------------------------------ */}
 
       <div className="print:overflow-visible">
