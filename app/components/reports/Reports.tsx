@@ -17,7 +17,7 @@ export default function Reports() {
   const urlIsReleased = searchParams.get('isReleased');
   const urlLang = searchParams.get('lang');
   const urlWorkshopId = searchParams.get('providerWorkShopId');
-  const token = searchParams.get('token');
+  const token = searchParams.get('access_token');
 
   const { data, isLoading } = useGetReportQuery({
     startDate,
