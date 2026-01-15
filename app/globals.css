@@ -1,1 +1,33 @@
 @import "tailwindcss";
+
+@media print {
+  #invoice-container {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    box-sizing: border-box;
+    overflow: hidden !important;
+  }
+
+  #invoice-container * {
+    max-height: none !important;
+    page-break-inside: avoid !important;
+  }
+
+  #invoice-container table {
+    page-break-inside: avoid !important;
+  }
+}
+
+
+[data-pdf-report] * {
+  line-height: 1.5 !important;
+  transform: none !important;
+}
+
+[data-pdf-report] .header-text {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
