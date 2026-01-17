@@ -608,9 +608,8 @@ const Page = () => {
           </section>
         </section>
       </div>
-      {/* e */}
+      {/* end */}
     </div>
   );
 };
-
 export default Page;
