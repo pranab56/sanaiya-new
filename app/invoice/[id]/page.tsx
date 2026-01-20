@@ -199,7 +199,7 @@ const Page = () => {
               <div className="space-y-3 print:space-y-3">
                 <div className="flex justify-start items-center gap-2 print:gap-5">
                   <span className="text-gray-700  print:text-gray-700">invoice no.</span>
-                  <span className="text-red-600 text-xs font-semibold print:text-red-600">{invoiceData?._id || 'N/A'}</span>
+                  <span className="text-red-600 text-xs font-semibold print:text-red-600">{invoiceData?.recieptNumber || 'N/A'}</span>
                 </div>
 
                 <div className="flex justify-start items-center gap-2 print:gap-5">
@@ -266,9 +266,10 @@ const Page = () => {
                           <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
                             <span className="text-md font-bold print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberArabic || 'N/A'}</span>
                           </div>
-                          <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 ">
-                            <span className="text-md font-bold print:text-md" style={{ fontFamily: 'Arial' }}>
-                              {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[1] || 'N/A'}
+
+                          <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
+                            <span className="text-md font-bold tracking-wide print:text-md">
+                              {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[0] || 'N/A'}
                             </span>
                           </div>
                         </div>
@@ -278,9 +279,9 @@ const Page = () => {
                           <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
                             <span className="text-md font-bold print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberEnglish || 'N/A'}</span>
                           </div>
-                          <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
-                            <span className="text-md font-bold tracking-wide print:text-md">
-                              {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[0] || 'N/A'}
+                          <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 ">
+                            <span className="text-md font-bold print:text-md" style={{ fontFamily: 'Arial' }}>
+                              {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[1] || 'N/A'}
                             </span>
                           </div>
                         </div>
@@ -310,7 +311,7 @@ const Page = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-8 print:flex-row print:gap-8">
             {/* Customer Name - Right Side */}
             <div className="flex items-center gap-4 print:gap-4">
-              <span className="text-gray-900 font-semibold print:text-gray-900 text-xs">VAT -{invoiceData?.providerWorkShopId?.taxVatNumber || 'N/A'}</span>
+              <span className="text-gray-900 font-semibold print:text-gray-900 text-xs">VAT -{invoiceData?.client.documentNumber || 'N/A'}</span>
               <span className="text-gray-700 font-medium print:text-gray-700 text-xs">الرقم الضريبي</span>
             </div>
 
@@ -578,7 +579,7 @@ const Page = () => {
               {/* Red Bar */}
               <div className="bg-[#CB3640] flex items-center justify-between px-10 h-1/2 pl-[32%] print:pl-[32%]">
                 <h1 className="text-base font-medium text-white print:text-base">
-                  {invoiceData?.client?.clientId?.contact || 'N/A'}
+                  {invoiceData?.client?.contact || 'N/A'}
                 </h1>
 
                 <Image

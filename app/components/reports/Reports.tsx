@@ -69,86 +69,74 @@ export default function Reports() {
 
   const handleDownloadPDF = async () => {
     const element = reportRef.current;
-    if (!element) return;
-
-    try {
-      const canvas = await html2canvas(element, {
-        backgroundColor: null, // Ensure a white background
-        scale: 2, // Increase scale for better quality
-        useCORS: true, // Enable CORS for images
-        logging: false,
-        onclone: (doc) => {
-          const clonedElement = doc.querySelector('[data-pdf-report]') || doc.body;
-          const all = clonedElement.querySelectorAll("*");
-
-          all.forEach((el) => {
-            const htmlEl = el as HTMLElement;
-            const styles = getComputedStyle(htmlEl);
-
-            // Fix text color
-            if (styles.color.includes("lab") || styles.color.includes("oklch")) {
-              htmlEl.style.color = "rgb(0,0,0)";
-            }
-
-            // Fix background color
-            if (styles.backgroundColor.includes("lab") || styles.backgroundColor.includes("oklch")) {
-              htmlEl.style.backgroundColor = "#ffffff";
-            }
-
-            // Fix border color
-            if (styles.borderColor.includes("lab") || styles.borderColor.includes("oklch")) {
-              htmlEl.style.borderColor = "#ffffff";
-            }
-
-            // IMPORTANT: Fix line-height and padding issues
-            if (htmlEl.style.lineHeight && parseFloat(htmlEl.style.lineHeight) > 2) {
-              htmlEl.style.lineHeight = "1.5";
-            }
-
-            // Fix any transform or positioning issues
-            htmlEl.style.transform = "none";
-          });
-        },
-      });
-
-      // Convert canvas to image
-      const imgData = canvas.toDataURL("image/png");
-
-      // Create PDF
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = 210;
-      const pageHeight = 297;
-
-      // Calculate dimensions
-      const imgWidthPx = canvas.width;
-      const imgHeightPx = canvas.height;
-
-      // Add some padding (10mm from each side)
-      const padding = 10;
-      const availableWidth = pageWidth - (padding * 2);
-      const availableHeight = pageHeight - (padding * 2);
-
-      // Scale to fit with padding
-      const scale = Math.min(
-        availableWidth / (imgWidthPx / 2),  // divide by 2 because scale=2
-        availableHeight / (imgHeightPx / 2)
-      );
-
-      const pdfWidth = (imgWidthPx / 2) * scale;
-      const pdfHeight = (imgHeightPx / 2) * scale;
-
-      // Center content horizontally and start from top with padding
-      const marginX = (pageWidth - pdfWidth) / 2;
-      const marginY = padding; // Start from top instead of centering vertically
-
-      pdf.addImage(imgData, "PNG", marginX, marginY, pdfWidth, pdfHeight);
-
-      // Download PDF
-      pdf.save("report.pdf");
-    } catch (error) {
-      console.error("PDF generation failed:", error);
-      alert("Failed to generate PDF. Please try again.");
+    if (!element) {
+      return null
     }
+
+    const canvas = await html2canvas(element, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+      useCORS: true,
+      onclone: (doc) => {
+        const all = doc.querySelectorAll("*");
+
+        all.forEach((el) => {
+          const htmlEl = el as HTMLElement;
+          const styles = getComputedStyle(htmlEl);
+
+          // text color
+          if (
+            styles.color.includes("lab") ||
+            styles.color.includes("oklch")
+          ) {
+            htmlEl.style.color = "rgb(0,0,0)";
+          }
+
+          // background color
+          if (
+            styles.backgroundColor.includes("lab") ||
+            styles.backgroundColor.includes("oklch")
+          ) {
+            htmlEl.style.backgroundColor = "rgb(255,255,255)";
+          }
+
+          // border color
+          if (
+            styles.borderColor.includes("lab") ||
+            styles.borderColor.includes("oklch")
+          ) {
+            htmlEl.style.borderColor = "rgb(200,200,200)";
+
+          }
+        });
+      },
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const pageWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+
+    // Original image size
+    const imgWidthPx = canvas.width;
+    const imgHeightPx = canvas.height;
+
+    // Scale to fit exactly in A4
+    const scale = Math.min(pageWidth / imgWidthPx, pageHeight / imgHeightPx);
+
+    const pdfWidth = imgWidthPx * scale;
+    const pdfHeight = imgHeightPx * scale;
+
+    // Optional: center content horizontally
+    const marginX = (pageWidth - pdfWidth) / 2;
+    const marginY = (pageHeight - pdfHeight) / 2;
+
+    pdf.addImage(imgData, "PNG", marginX, marginY, pdfWidth, pdfHeight);
+
+    pdf.save("report.pdf");
+
   };
 
 
