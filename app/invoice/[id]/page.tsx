@@ -221,7 +221,7 @@ const Page = () => {
 
           {/* Vehicle Information Bar */}
 
-          <section className='flex flex-col sm:flex-row items-end justify-between gap-2 h-auto sm:h-[100px] print:flex-row print:h-[100px]'>
+          <section className='flex flex-col sm:flex-row items-end justify-between gap-2 h-auto sm:h-25 print:flex-row print:h-25'>
             <section className="bg-gray-200 rounded-sm  flex items-center justify-between w-full sm:w-9/12 px-3 print:w-9/12">
               <div className="flex items-center gap-6 print:gap-6">
                 {/* Toyota Logo */}

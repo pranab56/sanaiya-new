@@ -38,7 +38,7 @@ export default function ArabicInvoice() {
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <span className="font-medium">VAT: 300787972600003</span>
-              <span className="font-medium" dir="ltr">+966503343000</span>
+              <span className="font-medium" >+966503343000</span>
             </div>
           </div>
 
