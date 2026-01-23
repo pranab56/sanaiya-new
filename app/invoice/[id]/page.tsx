@@ -269,7 +269,7 @@ const Page = () => {
 
                           <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
                             <span className="text-md font-bold tracking-wide print:text-md">
-                              {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[0] || 'N/A'}
+                              {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[1] || 'N/A'}
                             </span>
                           </div>
                         </div>
@@ -281,7 +281,7 @@ const Page = () => {
                           </div>
                           <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 ">
                             <span className="text-md font-bold print:text-md" style={{ fontFamily: 'Arial' }}>
-                              {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[1] || 'N/A'}
+                              {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[0] || 'N/A'}
                             </span>
                           </div>
                         </div>
@@ -579,7 +579,7 @@ const Page = () => {
               {/* Red Bar */}
               <div className="bg-[#CB3640] flex items-center justify-between px-10 h-1/2 pl-[32%] print:pl-[32%]">
                 <h1 className="text-base font-medium text-white print:text-base">
-                  {invoiceData?.client?.contact || 'N/A'}
+                  {invoiceData?.providerWorkShopId?.contact || 'N/A'}
                 </h1>
 
                 <Image
