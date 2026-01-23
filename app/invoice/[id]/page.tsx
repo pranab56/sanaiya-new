@@ -357,7 +357,7 @@ const Page = () => {
                   invoiceData.worksList.map((item: WorkItem, index: number) => (
                     <tr key={index} className="bg-gray-100 print:bg-gray-100">
                       <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{index + 1}</td>
-                      <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.work.code || "N/A"}</td>
+                      <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item?.work?.code || "N/A"}</td>
                       <td className="border text-xs border-gray-300 text-center px-4 py-6 print:px-4 print:py-6">
                         {item.work.title.ar} <br />
                         {item.work.title.en}
@@ -406,7 +406,7 @@ const Page = () => {
                   invoiceData.sparePartsList.map((item: SparePartItem, index: number) => (
                     <tr key={index} className="bg-gray-100 print:bg-gray-100">
                       <td className="border border-gray-300 text-center px-4 py-6 print:px-4 print:py-6">{index + 1}</td>
-                      <td className="border border-gray-300 px-4 text-center py-6 print:px-4 print:py-6">{item.code || "N/A"}</td>
+                      <td className="border border-gray-300 px-4 text-center py-6 print:px-4 print:py-6">{item?.code || "N/A"}</td>
                       <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.itemName || "N/A"}</td>
                       <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.quantity || "N/A"}</td>
                       <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.cost || "N/A"}</td>
