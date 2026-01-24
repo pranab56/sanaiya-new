@@ -270,7 +270,7 @@ const Page = () => {
                           <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
                             <span className="text-md font-bold tracking-wide print:text-md">
                               {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[1]
-                                ?.split('')
+                                ?.split('').reverse()
                                 .join(' ') || 'N/A'}
                             </span>
                           </div>
