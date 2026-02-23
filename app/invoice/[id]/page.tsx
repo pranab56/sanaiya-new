@@ -129,6 +129,7 @@ const Page = () => {
 
   const invoiceData = data.data;
 
+
   return (
     <div className=' items-start flex flex-row-reverse justify-evenly p-3'>
       <button
@@ -150,7 +151,7 @@ const Page = () => {
         <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5 print:flex-row">
           <div className="shrink-0">
             <Image
-              src={"/icons/logoOne.png"}
+              src={`${baseURL}${invoiceData?.image}`}
               height={1000}
               width={1000}
               className='w-24 h-24 print:w-24 print:h-24'
