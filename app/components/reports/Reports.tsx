@@ -364,7 +364,7 @@ export default function Reports() {
         <div className="mb-6">
           <div className="text-center  py-4 px-4 rounded-lg" style={{ backgroundColor: 'rgb(229, 231, 235)', }}>
             <p className="text-2xl flex justify-center items-center gap-3 font-bold" style={{ color: 'rgb(31, 41, 55)' }}>
-              <div>{t.from}</div> <div>{formatDateToDDMMYYYY(reportData?.range?.end)}</div> <div>{t.to}</div> <div>{formatDateToDDMMYYYY(reportData?.range?.start)}</div> <div>{t.duration}</div>: <div>{duration}</div> <div>{t.days}</div>
+              <div>{t.from}</div> <div>{formatDateToDDMMYYYY(reportData?.range?.start)}</div> <div>{t.to}</div> <div>{formatDateToDDMMYYYY(reportData?.range?.end)}</div> <div>{t.duration}</div>: <div>{duration}</div> <div>{t.days}</div>
             </p>
           </div>
         </div>

@@ -131,9 +131,9 @@ const Page = () => {
 
 
   return (
-    <div className=' items-start flex flex-row-reverse justify-evenly p-3'>
+    <div className='items-center lg:items-start flex flex-col lg:flex-row-reverse justify-center lg:justify-evenly p-4 gap-6 bg-gray-50 min-h-screen'>
       <button
-        className='border border-gray-300 text-sm cursor-pointer px-5 py-2 shadow-md hover:shadow-lg'
+        className='border border-gray-300 text-sm font-semibold cursor-pointer px-10 py-3 shadow-md hover:shadow-lg w-full lg:w-auto rounded-md bg-white transition-all duration-200 active:scale-95'
         onClick={handleDownloadPDF}
         type='button'
       >
@@ -144,7 +144,7 @@ const Page = () => {
 
       <div
         ref={invoiceRef}
-        className="w-full max-w-4xl mx-auto flex flex-col gap-2 bg-white p-6 border border-gray-50 print:max-w-[210mm] print:mx-0"
+        className="w-full max-w-4xl mx-auto flex flex-col gap-2 bg-white p-4 sm:p-8 border border-gray-200 shadow-sm print:max-w-[210mm] print:mx-0 print:p-0 print:border-none print:shadow-none"
         id="invoice-container"
       >
         {/* Your existing invoice content remains exactly the same */}
@@ -171,28 +171,28 @@ const Page = () => {
               />
             )}
           </div>
-          <div className="flex-1 text-right print:text-right">
-            <p className=" text-xl mb-1 font-medium print:text-base">
+          <div className="flex-1 text-center sm:text-right print:text-right">
+            <p className=" text-lg sm:text-xl mb-1 font-medium print:text-base">
               {invoiceData?.providerWorkShopId?.workshopNameEnglish || 'N/A'}
             </p>
-            <h1 className="text-lg  text-gray-900 mb-2 print:text-2xl">
+            <h1 className="text-md sm:text-lg text-gray-900 mb-2 print:text-2xl">
               {invoiceData?.providerWorkShopId?.workshopNameArabic || 'N/A'}
             </h1>
 
-            <p className="text-xs font-normal mb-3 print:text-xs">
+            <p className="text-[10px] sm:text-xs font-normal mb-1 sm:mb-3 print:text-xs">
               CR No : {invoiceData?.providerWorkShopId?.crn || 'N/A'}
             </p>
-            <p className="text-xs font-normal mb-3 print:text-xs">
+            <p className="text-[10px] sm:text-xs font-normal mb-1 sm:mb-3 print:text-xs">
               VAT No : {invoiceData?.providerWorkShopId?.taxVatNumber || 'N/A'}
             </p>
-            <p className="text-xs font-normal mb-3 print:text-xs">
+            <p className="text-[10px] sm:text-xs font-normal mb-1 sm:mb-3 print:text-xs">
               iBan No : {invoiceData?.providerWorkShopId?.bankAccountNumber || 'N/A'}
             </p>
           </div>
         </div>
-        <div className="-mt-8 print:-mt-8">
+        <div className="mt-4 md:-mt-8 print:-mt-8">
           {/* Header Section */}
-          <div className="flex justify-between items-start -mb-10 print:-mb-10">
+          <div className="flex justify-between items-start mb-4 md:-mb-10 print:-mb-10">
             <div className=" w-full">
               <h1 className="text-center text-lg mb-2 print:text-lg">(Simplified tax invoice)</h1>
               <h2 className="text-center text-2xl font-bold mb-6 print:text-2xl">فاتورة ضريبية مبسطة</h2>
@@ -222,8 +222,8 @@ const Page = () => {
 
           {/* Vehicle Information Bar */}
 
-          <section className='flex flex-col sm:flex-row items-end justify-between gap-2 h-auto sm:h-25 print:flex-row print:h-25'>
-            <section className="bg-gray-200 rounded-sm  flex items-center justify-between w-full sm:w-9/12 px-3 print:w-9/12">
+          <section className='flex flex-col md:flex-row items-stretch md:items-end justify-between gap-4 md:gap-2 h-auto md:h-25 print:flex-row print:h-25'>
+            <section className="bg-gray-200 rounded-sm flex items-center justify-between w-full md:w-8/12 lg:w-9/12 px-4 py-2 md:py-0 print:w-9/12">
               <div className="flex items-center gap-6 print:gap-6">
                 {/* Toyota Logo */}
                 <div className="print:p-4">
@@ -246,7 +246,7 @@ const Page = () => {
               <div className="text-xl font-bold print:text-xl">{invoiceData?.car?.year || 'N/A'}</div>
             </section>
 
-            <section className='w-full sm:w-4/12 print:w-4/12 mt-4 sm:mt-0 print:mt-0'>
+            <section className='w-full md:w-3/12 lg:w-4/12 print:w-4/12 mt-4 md:mt-0 print:mt-0'>
 
               <div className="">
                 <div className="flex flex-col gap-2 print:gap-2">
@@ -264,12 +264,12 @@ const Page = () => {
                       <div className="flex-1 flex flex-col print:flex-col">
                         {/* Top Row */}
                         <div className="border-b-3 border-gray-600 flex print:flex">
-                          <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
-                            <span className="text-md font-bold print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberArabic || 'N/A'}</span>
+                          <div className="flex-1 border-r-3 border-gray-600 px-3 py-4 sm:px-6 sm:py-6 flex items-center justify-center print:px-6 print:py-6">
+                            <span className="text-sm sm:text-md font-bold print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberArabic || 'N/A'}</span>
                           </div>
 
-                          <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
-                            <span className="text-md font-bold tracking-wide print:text-md">
+                          <div className="flex-1 border-r-3 border-gray-600 px-3 py-4 sm:px-6 sm:py-6 flex items-center justify-center print:px-6 print:py-6">
+                            <span className="text-sm sm:text-md font-bold tracking-wide print:text-md">
                               {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[1]
                                 ?.split('').reverse()
                                 .join(' ') || 'N/A'}
@@ -279,11 +279,11 @@ const Page = () => {
 
                         {/* Bottom Row */}
                         <div className="flex print:flex">
-                          <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 print:py-6">
-                            <span className="text-md font-bold print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberEnglish || 'N/A'}</span>
+                          <div className="flex-1 border-r-3 border-gray-600 px-3 py-4 sm:px-6 sm:py-6 flex items-center justify-center print:px-6 print:py-6">
+                            <span className="text-sm sm:text-md font-bold print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberEnglish || 'N/A'}</span>
                           </div>
-                          <div className="flex-1 border-r-3 border-gray-600 px-6 py-6 flex items-center justify-center print:px-6 ">
-                            <span className="text-md font-bold print:text-md" style={{ fontFamily: 'Arial' }}>
+                          <div className="flex-1 border-r-3 border-gray-600 px-3 py-4 sm:px-6 sm:py-6 flex items-center justify-center print:px-6 ">
+                            <span className="text-sm sm:text-md font-bold print:text-md" style={{ fontFamily: 'Arial' }}>
                               {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[0]
                                 ?.split('')
                                 .join(' ') || 'N/A'}
@@ -313,21 +313,23 @@ const Page = () => {
         </div>
 
         <div className="w-full px-8 py-4 border border-gray-300 rounded print:px-8 print:py-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-8 print:flex-row print:gap-8">
-            {/* Customer Name - Right Side */}
-            <div className="flex items-center gap-4 print:gap-4">
-              <span className="text-gray-900 font-semibold print:text-gray-900 text-xs">VAT -{invoiceData?.client.documentNumber || 'N/A'}</span>
-              <span className="text-gray-700 font-medium print:text-gray-700 text-xs">الرقم الضريبي</span>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8 print:flex-row print:gap-8">
+            {/* VAT Number */}
+            <div className="flex items-center justify-between w-full md:w-auto gap-4 print:gap-4">
+              <span className="text-gray-900 font-semibold text-xs whitespace-nowrap">VAT -{invoiceData?.client.documentNumber || 'N/A'}</span>
+              <span className="text-gray-700 font-medium text-xs whitespace-nowrap">الرقم الضريبي</span>
             </div>
 
-            <div className="flex items-center gap-4 print:gap-4">
-              <span className="text-gray-900 font-semibold print:text-gray-900">{invoiceData?.client?.clientId?.contact || 'N/A'}</span>
-              <span className="text-gray-700 font-medium print:text-gray-700">الجوال</span>
+            {/* Phone */}
+            <div className="flex items-center justify-between w-full md:w-auto gap-4 print:gap-4 border-t border-b border-gray-100 py-2 md:border-none md:py-0">
+              <span className="text-gray-900 font-semibold whitespace-nowrap">{invoiceData?.client?.clientId?.contact || 'N/A'}</span>
+              <span className="text-gray-700 font-medium whitespace-nowrap">الجوال</span>
             </div>
 
-            <div className="flex items-center gap-4 print:gap-4">
-              <span className="text-gray-700 font-medium print:text-gray-700">{invoiceData?.customerInvoiceName || 'N/A'}</span>
-              <span className="text-gray-900 font-semibold print:text-gray-900">اسم العميل</span>
+            {/* Customer Name */}
+            <div className="flex items-center justify-between w-full md:w-auto gap-4 print:gap-4">
+              <span className="text-gray-700 font-medium whitespace-nowrap">{invoiceData?.customerInvoiceName || 'N/A'}</span>
+              <span className="text-gray-900 font-semibold whitespace-nowrap">اسم العميل</span>
             </div>
           </div>
         </div>
@@ -335,8 +337,8 @@ const Page = () => {
 
         <div className="print:overflow-visible">
           {/* Works Table */}
-          <div className="mb-8 print:mb-8">
-            <table className="w-full border-collaps print:border-collapse">
+          <div className="mb-8 print:mb-8 overflow-x-auto">
+            <table className="w-full border-collapse min-w-[700px] print:min-w-0">
               <thead>
                 <tr className="bg-[#1771B7] text-white print:bg-[#1771B7]">
                   <th className="border-2 border-white px-4 py-3 text-center font-semibold print:px-4 print:py-3">N</th>
@@ -361,15 +363,15 @@ const Page = () => {
                 {invoiceData?.worksList && invoiceData?.worksList?.length > 0 ? (
                   invoiceData.worksList.map((item: WorkItem, index: number) => (
                     <tr key={index} className="bg-gray-100 print:bg-gray-100">
-                      <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{index + 1}</td>
-                      <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item?.work?.code || "N/A"}</td>
-                      <td className="border text-xs border-gray-300 text-center px-4 py-6 print:px-4 print:py-6">
+                      <td className="border border-gray-300 px-3 py-4 sm:px-4 sm:py-6 text-center print:px-4 print:py-6">{index + 1}</td>
+                      <td className="border border-gray-300 px-3 py-4 sm:px-4 sm:py-6 text-center print:px-4 print:py-6">{item?.work?.code || "N/A"}</td>
+                      <td className="border text-[10px] sm:text-xs border-gray-300 text-center px-3 py-4 sm:px-4 sm:py-6 print:px-4 print:py-6">
                         {item?.work?.title?.ar} <br />
                         {item.work?.title?.en}
                       </td>
-                      <td className="border border-gray-300 text-center px-4 py-6 print:px-4 print:py-6">{item?.quantity || "N/A"}</td>
-                      <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item?.cost || "N/A"}</td>
-                      <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item?.finalCost || "N/A"}</td>
+                      <td className="border border-gray-300 text-center px-3 py-4 sm:px-4 sm:py-6 print:px-4 print:py-6">{item?.quantity || "N/A"}</td>
+                      <td className="border border-gray-300 px-3 py-4 sm:px-4 sm:py-6 text-center print:px-4 print:py-6">{item?.cost || "N/A"}</td>
+                      <td className="border border-gray-300 px-3 py-4 sm:px-4 sm:py-6 text-center print:px-4 print:py-6">{item?.finalCost || "N/A"}</td>
                     </tr>
                   ))
                 ) : (
@@ -384,8 +386,8 @@ const Page = () => {
           </div>
 
           {/* Spare Parts Table */}
-          <div className="mb-8 print:mb-8">
-            <table className="w-full border-collapse print:border-collapse">
+          <div className="mb-8 print:mb-8 overflow-x-auto">
+            <table className="w-full border-collapse min-w-[700px] print:min-w-0">
               <thead>
                 <tr className="bg-[#1771B7] text-white print:bg-[#1771B7]">
                   <th className="border-2 border-white px-4 py-3 text-center font-semibold print:px-4 print:py-3">N</th>
@@ -410,12 +412,12 @@ const Page = () => {
                 {invoiceData?.sparePartsList && invoiceData.sparePartsList.length > 0 ? (
                   invoiceData.sparePartsList.map((item: SparePartItem, index: number) => (
                     <tr key={index} className="bg-gray-100 print:bg-gray-100">
-                      <td className="border border-gray-300 text-center px-4 py-6 print:px-4 print:py-6">{index + 1}</td>
-                      <td className="border border-gray-300 px-4 text-center py-6 print:px-4 print:py-6">{item?.code || "N/A"}</td>
-                      <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.itemName || "N/A"}</td>
-                      <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.quantity || "N/A"}</td>
-                      <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.cost || "N/A"}</td>
-                      <td className="border border-gray-300 px-4 py-6 text-center print:px-4 print:py-6">{item.finalCost || "N/A"}</td>
+                      <td className="border border-gray-300 text-center px-3 py-4 sm:px-4 sm:py-6 print:px-4 print:py-6">{index + 1}</td>
+                      <td className="border border-gray-300 px-3 text-center py-4 sm:px-4 sm:py-6 print:px-4 print:py-6">{item?.code || "N/A"}</td>
+                      <td className="border border-gray-300 px-3 py-4 sm:px-4 sm:py-6 text-center print:px-4 print:py-6">{item.itemName || "N/A"}</td>
+                      <td className="border border-gray-300 px-3 py-4 sm:px-4 sm:py-6 text-center print:px-4 print:py-6">{item.quantity || "N/A"}</td>
+                      <td className="border border-gray-300 px-3 py-4 sm:px-4 sm:py-6 text-center print:px-4 print:py-6">{item.cost || "N/A"}</td>
+                      <td className="border border-gray-300 px-3 py-4 sm:px-4 sm:py-6 text-center print:px-4 print:py-6">{item.finalCost || "N/A"}</td>
                     </tr>
                   ))
                 ) : (
@@ -472,95 +474,94 @@ const Page = () => {
             {/* Left Section - Invoice Totals */}
             <div className="space-y-3 print:space-y-3">
               {/* Total of spare parts */}
-              <div className="bg-[#CB3640] text-white p-2 flex gap-4 items-center rounded mb-10 print:mb-10 print:gap-4 ">
-                <span className="text-2xl font-bold print:text-2xl">
+              <div className="bg-[#CB3640] text-white p-3 sm:p-2 flex gap-4 items-center rounded mb-4 sm:mb-10 print:mb-10 print:gap-4 ">
+                <span className="shrink-0">
                   <Image
                     src={"/icons/Symbol.png"}
-                    height={1000}
-                    width={1000}
-                    className='h-9 w-9 text-black print:h-11 print:w-10'
+                    height={100}
+                    width={100}
+                    className='h-8 w-8 sm:h-9 sm:w-9 text-black print:h-11 print:w-10'
                     alt="Symbol"
                   />
                 </span>
-                <div className=" flex items-center  gap-6 print:gap-3">
-                  <div className="text-lg print:text-lg">({invoiceData?.totalCostOfSparePartsExcludingTax || 0})</div>
-                  <div className="text-sm font-medium print:text-lg w-full">
-                    <span className='w-full'> اجمالي مبلغ قطع الغيار</span><br />
+                <div className="flex flex-1 items-center justify-between sm:justify-start gap-4 sm:gap-6 print:gap-3">
+                  <div className="text-md sm:text-lg font-bold print:text-lg">({invoiceData?.totalCostOfSparePartsExcludingTax || 0})</div>
+                  <div className="text-[10px] sm:text-sm font-medium print:text-lg text-right sm:text-left">
+                    <span> اجمالي مبلغ قطع الغيار</span><br />
                     <span>Total of spare parts</span>
-
                   </div>
                 </div>
               </div>
-              <div className="bg-gray-100 p-2 font-medium flex gap-4 items-center rounded print:gap-4">
-                <span className="text-2xl font-bold print:text-2xl">
+              <div className="bg-gray-100 p-3 sm:p-2 font-medium flex gap-4 items-center rounded print:gap-4">
+                <span className="shrink-0">
                   <Image
                     src={"/icons/Symbol_black.png"}
-                    height={1000}
-                    width={1000}
-                    className='h-9 w-9 text-black print:h-11 print:w-10'
+                    height={100}
+                    width={100}
+                    className='h-8 w-8 sm:h-9 sm:w-9 text-black print:h-11 print:w-10'
                     alt="Symbol"
                   />
                 </span>
-                <div className=" flex items-center gap-6 print:gap-3">
-                  <div className="text-lg print:text-lg">({invoiceData?.totalCostOfWorkShopExcludingTax || 0})</div>
-                  <div className="text-sm font-medium print:text-lg w-full">
+                <div className="flex flex-1 items-center justify-between sm:justify-start gap-4 sm:gap-6 print:gap-3">
+                  <div className="text-md sm:text-lg font-bold print:text-lg">({invoiceData?.totalCostOfWorkShopExcludingTax || 0})</div>
+                  <div className="text-[10px] sm:text-sm font-medium print:text-lg text-right sm:text-left">
                     <span>المبلغ الخاضع للضريبة</span> <br />
                     <span>Taxable amount </span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-100 p-2 font-medium flex gap-4 items-center rounded print:gap-4">
-                <span className="text-2xl font-bold print:text-2xl">
+              <div className="bg-gray-100 p-3 sm:p-2 font-medium flex gap-4 items-center rounded print:gap-4">
+                <span className="shrink-0">
                   <Image
                     src={"/icons/Symbol_black.png"}
-                    height={1000}
-                    width={1000}
-                    className='h-9 w-9 text-black print:h-11 print:w-10'
+                    height={100}
+                    width={100}
+                    className='h-8 w-8 sm:h-9 sm:w-9 text-black print:h-11 print:w-10'
                     alt="Symbol"
                   />
                 </span>
-                <div className=" flex items-center gap-6 print:gap-3">
-                  <div className="text-lg print:text-lg"> ({invoiceData?.finalDiscountInFlatAmount || 0})</div>
-                  <div className="text-sm font-medium print:text-lg w-full">
+                <div className="flex flex-1 items-center justify-between sm:justify-start gap-4 sm:gap-6 print:gap-3">
+                  <div className="text-md sm:text-lg font-bold print:text-lg"> ({invoiceData?.finalDiscountInFlatAmount || 0})</div>
+                  <div className="text-[10px] sm:text-sm font-medium print:text-lg text-right sm:text-left">
                     <span>الخصم قبل الضريبة</span> <br />
                     <span>Discount</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-100 p-2 font-medium flex gap-4 items-center rounded print:gap-4">
-                <span className="text-2xl font-bold print:text-2xl">
+              <div className="bg-gray-100 p-3 sm:p-2 font-medium flex gap-4 items-center rounded print:gap-4">
+                <span className="shrink-0">
                   <Image
                     src={"/icons/Symbol_black.png"}
-                    height={1000}
-                    width={1000}
-                    className='h-9 w-9 text-black print:h-11 print:w-10'
+                    height={100}
+                    width={100}
+                    className='h-8 w-8 sm:h-9 sm:w-9 text-black print:h-11 print:w-10'
                     alt="Symbol"
                   />
                 </span>
-                <div className=" flex items-center gap-6 print:gap-3">
-                  <div className="text-lg print:text-lg">({invoiceData?.taxAmount || 0})</div>
-                  <div className="text-sm font-medium print:text-lg w-full">
+                <div className="flex flex-1 items-center justify-between sm:justify-start gap-4 sm:gap-6 print:gap-3">
+                  <div className="text-md sm:text-lg font-bold print:text-lg">({invoiceData?.taxAmount || 0})</div>
+                  <div className="text-[10px] sm:text-sm font-medium print:text-lg text-right sm:text-left">
                     <span>(15%)الضريبة</span><br />
                     <span>VAT amount</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-[#1771B7] text-white p-2 flex gap-4 items-center rounded print:gap-4">
-                <span className="text-2xl font-bold print:text-2xl">
+              <div className="bg-[#1771B7] text-white p-3 sm:p-2 flex gap-4 items-center rounded print:gap-4">
+                <span className="shrink-0">
                   <Image
                     src={"/icons/Symbol.png"}
-                    height={1000}
-                    width={1000}
-                    className='h-9 w-9 text-black print:h-11 print:w-10'
+                    height={100}
+                    width={100}
+                    className='h-8 w-8 sm:h-9 sm:w-9 text-black print:h-11 print:w-10'
                     alt="Symbol"
                   />
                 </span>
-                <div className=" flex items-center gap-6 print:gap-3">
-                  <div className="text-lg print:text-lg">({invoiceData?.totalCostIncludingTax || 0})</div>
-                  <div className="text-sm font-medium print:text-lg w-full">
+                <div className="flex flex-1 items-center justify-between sm:justify-start gap-4 sm:gap-6 print:gap-3">
+                  <div className="text-md sm:text-lg font-bold print:text-lg">({invoiceData?.totalCostIncludingTax || 0})</div>
+                  <div className="text-[10px] sm:text-sm font-medium print:text-lg text-right sm:text-left">
                     <span>الإجمالي شامل الضريبة</span><br />
                     <span>Total including tax</span>
                   </div>
@@ -573,7 +574,7 @@ const Page = () => {
         {/* ------------------------------------------------ */}
 
         <section>
-          <section className="relative w-full h-20 overflow-hidden print:h-24">
+          <section className="relative w-full h-auto sm:h-20 overflow-hidden print:h-24">
             {/* RIGHT FULL WIDTH SECTION */}
             <div className="absolute inset-0 w-full print:w-full">
               {/* Logos */}
@@ -582,20 +583,20 @@ const Page = () => {
               </div>
 
               {/* Red Bar */}
-              <div className="bg-[#CB3640] flex items-center justify-between px-10 h-1/2 pl-[32%] print:pl-[32%]">
-                <h1 className="text-base font-medium text-white print:text-base">
+              <div className="bg-[#CB3640] flex flex-col sm:flex-row items-center justify-between px-4 sm:px-10 h-auto sm:h-1/2 py-2 sm:py-0 pl-4 sm:pl-[32%] print:pl-[32%]">
+                <h1 className="text-xs sm:text-base font-medium text-white print:text-base order-2 sm:order-1">
                   {invoiceData?.providerWorkShopId?.contact || 'N/A'}
                 </h1>
 
                 <Image
                   src="/icons/footerCommunications.png"
                   alt="Footer communications"
-                  width={1000}
-                  height={1000}
-                  className="h-6 w-auto print:h-7"
+                  width={200}
+                  height={50}
+                  className="h-4 sm:h-6 w-auto print:h-7 mb-1 sm:mb-0 order-1 sm:order-2"
                 />
 
-                <h1 className="text-base font-medium text-white print:text-base">
+                <h1 className="text-xs sm:text-base font-medium text-white print:text-base order-3">
                   {data?.data?.providerWorkShopId?.address || "Riyadh - old Industrial - ali st."}
                 </h1>
               </div>
@@ -603,9 +604,9 @@ const Page = () => {
 
             {/* LEFT BLUE FIXED SECTION */}
             <div
-              className="relative z-10 w-[34%] h-full bg-[#1771B7] flex flex-col justify-center text-start pl-2 text-sm font-medium text-white print:w-[34%] print:pl-5 print:text-sm"
+              className="relative z-10 w-[60%] sm:w-[34%] h-full bg-[#1771B7] flex flex-col justify-center text-start pl-4 sm:pl-2 text-[10px] sm:text-sm font-medium text-white print:w-[34%] print:pl-5 print:text-sm"
               style={{
-                clipPath: "polygon(0 0, 70% 0, 95% 100%, 0 100%)",
+                clipPath: "polygon(0 0, 75% 0, 100% 100%, 0 100%)",
               }}
             >
               <h1>Thank you for your visit and</h1>
