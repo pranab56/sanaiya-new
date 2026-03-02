@@ -122,13 +122,23 @@ const Page = () => {
   };
 
 
+  const formatTimeHM = (dateValue: string) => {
+    if (!dateValue) return "N/A";
+    const d = new Date(dateValue);
+    if (isNaN(d.getTime())) return "N/A";
+    return d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
 
   if (isLoading) return <div className='h-screen flex justify-center items-center'>Loading...</div>;
 
   if (!data?.data) return <div className='h-screen flex justify-center items-center'>No invoice data available</div>;
 
   const invoiceData = data.data;
-
 
   return (
     <div className='items-center lg:items-start flex flex-col lg:flex-row-reverse justify-center lg:justify-evenly p-4 gap-6 bg-gray-50 min-h-screen'>
@@ -208,6 +218,11 @@ const Page = () => {
                   <span className="text-red-600 text-xs font-semibold print:text-red-600">
                     {invoiceData?.createdAt ? formatDateDMY(invoiceData.createdAt) : 'N/A'}
                   </span>
+                  {invoiceData?.createdAt && (
+                    <span className="text-red-600 text-xs font-semibold print:text-red-600">
+                      {formatTimeHM(invoiceData.createdAt)}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

@@ -412,7 +412,7 @@ export default function Reports() {
           <div className="rounded-lg py-6 px-6 flex flex-col sm:flex-row justify-between items-center" style={{ backgroundColor: 'rgb(203, 54, 64)', color: 'rgb(255, 255, 255)' }}>
             <div className="flex items-center gap-3 mb-4 sm:mb-0">
               <span className="text-3xl font-bold">ر.س</span>
-              <span className="text-3xl font-bold">{reportData?.totalUnpaidPostpaidFinalCost?.toFixed(2) || '0.00'}</span>
+              <span className="text-3xl font-bold">{reportData?.totalUnpaidFinalCost?.toFixed(2) || '0.00'}</span>
             </div>
             <div className="text-xl font-semibold text-center sm:text-right">{t.totalPostpaidAndSaved}</div>
           </div>
