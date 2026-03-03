@@ -153,7 +153,7 @@ export default function Reports() {
         allowTaint: false,
         imageTimeout: 0,
         logging: false,
-        windowWidth: element.scrollWidth,
+        windowWidth: 1024, // Use a fixed desktop width for capturing
         windowHeight: element.scrollHeight,
         onclone: (clonedDoc: Document) => {
           const clonedElement = clonedDoc.querySelector('[data-pdf-report]') as HTMLElement;
@@ -246,32 +246,42 @@ export default function Reports() {
               // Box sizing
               htmlEl.style.boxSizing = 'border-box';
 
-              // Fix images
+              // Fix images — but NOT inside the PDF-only footer (those have inline styles)
               if (htmlEl.tagName === 'IMG') {
-                const img = htmlEl as HTMLImageElement;
-                img.style.maxWidth = '12%';
-                img.style.height = 'auto';
-                img.style.display = 'inline-block';
+                const isInsidePdfFooter = htmlEl.closest('[data-pdf-footer]');
+                if (!isInsidePdfFooter) {
+                  const img = htmlEl as HTMLImageElement;
+                  img.style.maxWidth = '12%';
+                  img.style.height = 'auto';
+                  img.style.display = 'inline-block';
+                }
               }
 
-              // Fix footer section specifically for PDF
-              if (htmlEl.hasAttribute('data-footer-section')) {
-                const blueSection = clonedDoc.querySelector('[data-blue-section]') as HTMLElement;
-                const redSection = clonedDoc.querySelector('[data-red-section]') as HTMLElement;
-
-                if (blueSection) {
-                  blueSection.style.width = '30%';
-                  blueSection.style.clipPath = 'polygon(0 0, 75% 0, 92% 100%, 0 100%)';
-                }
-
-                if (redSection) {
-                  redSection.style.paddingLeft = '33%';
-                }
+              // Also fix other responsive elements to use desktop styles in PDF
+              if (htmlEl.className.includes('grid-cols-2') || htmlEl.className.includes('sm:grid-cols-3')) {
+                htmlEl.style.display = 'grid';
+                htmlEl.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+                htmlEl.style.gap = '1.5rem';
+              }
+              if (htmlEl.className.includes('flex-col') && htmlEl.className.includes('sm:flex-row')) {
+                htmlEl.style.flexDirection = 'row';
+              }
+              if (htmlEl.className.includes('text-xl') && htmlEl.className.includes('sm:text-2xl')) {
+                htmlEl.style.fontSize = '1.5rem';
+              }
+              if (htmlEl.className.includes('p-3') && htmlEl.className.includes('sm:p-6')) {
+                htmlEl.style.padding = '1.5rem';
               }
             } catch (err) {
               console.warn('Error processing element:', err);
             }
           });
+
+          // Swap footers AFTER the loop using querySelector (more reliable than hasAttribute inside forEach)
+          const screenFooter = clonedDoc.querySelector('[data-footer-section]') as HTMLElement;
+          const pdfFooter = clonedDoc.querySelector('[data-pdf-footer]') as HTMLElement;
+          if (screenFooter) screenFooter.style.display = 'none';
+          if (pdfFooter) pdfFooter.style.display = 'block';
         },
       });
 
@@ -324,7 +334,7 @@ export default function Reports() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className='min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6'>
       <div className={`no-print fixed top-4 z-50 right-4`}>
         <button
           className='border border-gray-300 text-sm cursor-pointer px-5 py-2 shadow-md hover:shadow-lg bg-white rounded'
@@ -336,26 +346,26 @@ export default function Reports() {
       </div>
 
       {/* Main Report Content - Using inline styles to avoid color conversion issues */}
-      <div ref={reportRef} data-pdf-report className="max-w-4xl mx-auto shadow p-6" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+      <div ref={reportRef} data-pdf-report className="max-w-4xl mx-auto shadow p-3 sm:p-6" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         {/* Header */}
         <div className="text-center px-4 pb-4 pt-4" style={{ backgroundColor: 'rgb(23, 113, 183)', color: 'rgb(255, 255, 255)' }}>
-          <h1 className="text-2xl font-bold mb-2">
+          <h1 className="text-xl sm:text-2xl font-bold mb-2">
             {reportData?.workshop?.workshopNameEnglish || 'Business Name'}
           </h1>
-          <p className="text-sm" style={{ opacity: 0.9 }}>
+          <p className="text-xs sm:text-sm" style={{ opacity: 0.9 }}>
             {reportData?.workshop?.workshopNameArabic || 'Business Subtitle'}
           </p>
         </div>
 
         {/* VAT and CR Bar */}
-        <div className="flex justify-between items-center px-6 py-2 text-sm" style={{ backgroundColor: 'rgb(203, 54, 64)', color: 'rgb(255, 255, 255)' }}>
+        <div className="flex justify-between items-center px-3 sm:px-6 py-2 text-[10px] sm:text-sm" style={{ backgroundColor: 'rgb(203, 54, 64)', color: 'rgb(255, 255, 255)' }}>
           <div>VAT - {reportData?.workshop?.taxVatNumber || 'N/A'}</div>
           <div>CR - {reportData?.workshop?.crn || 'N/A'}</div>
         </div>
 
         {/* App Title */}
         <div className="text-center py-6">
-          <h2 className="text-2xl font-bold" style={{ color: 'rgb(23, 113, 183)' }}>
+          <h2 className="text-xl sm:text-2xl font-bold" style={{ color: 'rgb(23, 113, 183)' }}>
             {t.reportIssuedBy}
           </h2>
         </div>
@@ -363,35 +373,37 @@ export default function Reports() {
         {/* Date Range */}
         <div className="mb-6">
           <div className="text-center  py-4 px-4 rounded-lg" style={{ backgroundColor: 'rgb(229, 231, 235)', }}>
-            <p className="text-2xl flex justify-center items-center gap-3 font-bold" style={{ color: 'rgb(31, 41, 55)' }}>
-              <div>{t.from}</div> <div>{formatDateToDDMMYYYY(reportData?.range?.start)}</div> <div>{t.to}</div> <div>{formatDateToDDMMYYYY(reportData?.range?.end)}</div> <div>{t.duration}</div>: <div>{duration}</div> <div>{t.days}</div>
+            <p className="text-sm sm:text-base md:text-2xl flex flex-wrap justify-center items-center gap-2 md:gap-3 font-bold" style={{ color: 'rgb(31, 41, 55)' }}>
+              <span className="flex items-center gap-1"><span>{t.from}</span> <span>{formatDateToDDMMYYYY(reportData?.range?.start)}</span></span>
+              <span className="flex items-center gap-1"><span>{t.to}</span> <span>{formatDateToDDMMYYYY(reportData?.range?.end)}</span></span>
+              <span className="flex items-center gap-1"><span>{t.duration}</span>: <span>{duration}</span> <span>{t.days}</span></span>
             </p>
           </div>
         </div>
 
         {/* Invoice Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="text-center py-6 px-4 rounded-lg" style={{ backgroundColor: 'rgb(249, 250, 251)' }}>
-            <p className="text-sm font-semibold mb-2 whitespace-pre-line" style={{ color: 'rgb(203, 54, 64)' }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-6">
+          <div className="text-center py-4 sm:py-6 px-2 sm:px-4 rounded-lg" style={{ backgroundColor: 'rgb(249, 250, 251)' }}>
+            <p className="text-[10px] sm:text-sm font-semibold mb-2 whitespace-pre-line" style={{ color: 'rgb(203, 54, 64)' }}>
               {t.numberOfSavedInvoices}
             </p>
-            <p className="text-4xl font-bold" style={{ color: 'rgb(203, 54, 64)' }}>
+            <p className="text-2xl sm:text-4xl font-bold" style={{ color: 'rgb(203, 54, 64)' }}>
               {reportData?.numberOfUnpaidNonPostpaidInvoices || 0}
             </p>
           </div>
-          <div className="text-center py-6 px-4 rounded-lg" style={{ backgroundColor: 'rgb(249, 250, 251)' }}>
-            <p className="text-sm font-semibold mb-2 whitespace-pre-line" style={{ color: 'rgb(249, 115, 22)' }}>
+          <div className="text-center py-4 sm:py-6 px-2 sm:px-4 rounded-lg" style={{ backgroundColor: 'rgb(249, 250, 251)' }}>
+            <p className="text-[10px] sm:text-sm font-semibold mb-2 whitespace-pre-line" style={{ color: 'rgb(249, 115, 22)' }}>
               {t.numberOfPostpaidInvoices}
             </p>
-            <p className="text-4xl font-bold" style={{ color: 'rgb(249, 115, 22)' }}>
+            <p className="text-2xl sm:text-4xl font-bold" style={{ color: 'rgb(249, 115, 22)' }}>
               {reportData?.numberOfUnpaidPostpaidInvoices || 0}
             </p>
           </div>
-          <div className="text-center py-6 px-4 rounded-lg" style={{ backgroundColor: 'rgb(249, 250, 251)' }}>
-            <p className="text-sm font-semibold mb-2 whitespace-pre-line" style={{ color: 'rgb(22, 163, 74)' }}>
+          <div className="text-center py-4 sm:py-6 px-2 sm:px-4 rounded-lg" style={{ backgroundColor: 'rgb(249, 250, 251)' }}>
+            <p className="text-[10px] sm:text-sm font-semibold mb-2 whitespace-pre-line" style={{ color: 'rgb(22, 163, 74)' }}>
               {t.numberOfCompletedInvoices}
             </p>
-            <p className="text-4xl font-bold" style={{ color: 'rgb(22, 163, 74)' }}>
+            <p className="text-2xl sm:text-4xl font-bold" style={{ color: 'rgb(22, 163, 74)' }}>
               {reportData?.numberOfPaidInvoices || 0}
             </p>
           </div>
@@ -400,74 +412,74 @@ export default function Reports() {
         {/* Financial Boxes */}
         <div className="mb-6 space-y-4">
           {/* Total Income */}
-          <div className="rounded-lg py-6 px-6 flex flex-col sm:flex-row justify-between items-center" style={{ backgroundColor: 'rgb(23, 113, 183)', color: 'rgb(255, 255, 255)' }}>
-            <div className="flex items-center gap-3 mb-4 sm:mb-0">
-              <span className="text-3xl font-bold">ر.س</span>
-              <span className="text-3xl font-bold">{reportData?.totalIncomeCollected?.toFixed(2) || '0.00'}</span>
+          <div className="rounded-lg py-4 sm:py-6 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center" style={{ backgroundColor: 'rgb(23, 113, 183)', color: 'rgb(255, 255, 255)' }}>
+            <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-0">
+              <span className="text-xl sm:text-3xl font-bold">ر.س</span>
+              <span className="text-xl sm:text-3xl font-bold">{reportData?.totalIncomeCollected?.toFixed(2) || '0.00'}</span>
             </div>
-            <div className="text-xl font-semibold text-center sm:text-right">{t.totalIncomeCollected}</div>
+            <div className="text-base sm:text-xl font-semibold text-center sm:text-right">{t.totalIncomeCollected}</div>
           </div>
 
           {/* Total Postpaid */}
-          <div className="rounded-lg py-6 px-6 flex flex-col sm:flex-row justify-between items-center" style={{ backgroundColor: 'rgb(203, 54, 64)', color: 'rgb(255, 255, 255)' }}>
-            <div className="flex items-center gap-3 mb-4 sm:mb-0">
-              <span className="text-3xl font-bold">ر.س</span>
-              <span className="text-3xl font-bold">{reportData?.totalUnpaidFinalCost?.toFixed(2) || '0.00'}</span>
+          <div className="rounded-lg py-4 sm:py-6 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center" style={{ backgroundColor: 'rgb(203, 54, 64)', color: 'rgb(255, 255, 255)' }}>
+            <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-0">
+              <span className="text-xl sm:text-3xl font-bold">ر.س</span>
+              <span className="text-xl sm:text-3xl font-bold">{reportData?.totalUnpaidFinalCost?.toFixed(2) || '0.00'}</span>
             </div>
-            <div className="text-xl font-semibold text-center sm:text-right">{t.totalPostpaidAndSaved}</div>
+            <div className="text-base sm:text-xl font-semibold text-center sm:text-right">{t.totalPostpaidAndSaved}</div>
           </div>
 
           {/* Total Expenses */}
-          <div className="rounded-lg py-6 px-6 flex flex-col sm:flex-row justify-between items-center" style={{ backgroundColor: 'rgb(149, 149, 149)', color: 'rgb(255, 255, 255)' }}>
-            <div className="flex items-center gap-3 mb-4 sm:mb-0">
-              <span className="text-3xl font-bold">ر.س</span>
-              <span className="text-3xl font-bold">{reportData?.totalExpenses?.toFixed(2) || '0.00'}</span>
+          <div className="rounded-lg py-4 sm:py-6 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center" style={{ backgroundColor: 'rgb(149, 149, 149)', color: 'rgb(255, 255, 255)' }}>
+            <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-0">
+              <span className="text-xl sm:text-3xl font-bold">ر.س</span>
+              <span className="text-xl sm:text-3xl font-bold">{reportData?.totalExpenses?.toFixed(2) || '0.00'}</span>
             </div>
-            <div className="text-xl font-semibold text-center sm:text-right">{t.totalExpensesPaid}</div>
+            <div className="text-base sm:text-xl font-semibold text-center sm:text-right">{t.totalExpensesPaid}</div>
           </div>
         </div>
 
         {/* Balance Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           {/* Collected Balance */}
-          <div className="rounded-lg p-6 text-center" style={{ backgroundColor: 'rgb(244, 245, 247)' }}>
-            <h3 className="text-lg font-bold mb-3" style={{ color: 'rgb(23, 113, 183)' }}>
+          <div className="rounded-lg p-3 sm:p-6 text-center" style={{ backgroundColor: 'rgb(244, 245, 247)' }}>
+            <h3 className="text-sm sm:text-lg font-bold mb-2 sm:mb-3" style={{ color: 'rgb(23, 113, 183)' }}>
               {t.collectedFinancialBalance}
             </h3>
-            <p className="text-sm font-bold" style={{ color: 'rgb(75, 85, 99)' }}>{t.allIncomeCollected}</p>
-            <p className="text-sm font-bold" style={{ color: 'rgb(75, 85, 99)' }}>-</p>
-            <p className="text-sm font-bold mb-4" style={{ color: 'rgb(75, 85, 99)' }}>{t.allExpensesPaid}</p>
+            <p className="text-[10px] sm:text-sm font-bold" style={{ color: 'rgb(75, 85, 99)' }}>{t.allIncomeCollected}</p>
+            <p className="text-[10px] sm:text-sm font-bold" style={{ color: 'rgb(75, 85, 99)' }}>-</p>
+            <p className="text-[10px] sm:text-sm font-bold mb-2 sm:mb-4" style={{ color: 'rgb(75, 85, 99)' }}>{t.allExpensesPaid}</p>
             <div className="flex items-center justify-center gap-2">
               <Image
                 src={"/icons/green_symbol.png"}
                 height={40}
                 width={40}
-                className='w-10 h-10'
+                className='w-6 h-6 sm:w-10 sm:h-10'
                 alt='Green symbol'
               />
-              <span className="text-2xl font-bold" style={{ color: 'rgb(23, 113, 183)' }}>
+              <span className="text-xl sm:text-2xl font-bold" style={{ color: 'rgb(23, 113, 183)' }}>
                 {reportData?.collectedFinancialBalance?.toFixed(2) || '0.00'}
               </span>
             </div>
           </div>
 
           {/* Recorded Balance */}
-          <div className="rounded-lg p-6 text-center" style={{ backgroundColor: 'rgb(244, 245, 247)' }}>
-            <h3 className="text-lg font-bold mb-3" style={{ color: 'rgb(220, 38, 38)' }}>
+          <div className="rounded-lg p-3 sm:p-6 text-center" style={{ backgroundColor: 'rgb(244, 245, 247)' }}>
+            <h3 className="text-sm sm:text-lg font-bold mb-2 sm:mb-3" style={{ color: 'rgb(220, 38, 38)' }}>
               {t.recordedFinancialBalance}
             </h3>
-            <p className="text-sm font-bold" style={{ color: 'rgb(75, 85, 99)' }}>{t.allIncomeRecorded}</p>
-            <p className="text-sm font-bold" style={{ color: 'rgb(75, 85, 99)' }}>-</p>
-            <p className="text-sm font-bold mb-4" style={{ color: 'rgb(75, 85, 99)' }}>{t.allExpensesPaid}</p>
+            <p className="text-[10px] sm:text-sm font-bold" style={{ color: 'rgb(75, 85, 99)' }}>{t.allIncomeRecorded}</p>
+            <p className="text-[10px] sm:text-sm font-bold" style={{ color: 'rgb(75, 85, 99)' }}>-</p>
+            <p className="text-[10px] sm:text-sm font-bold mb-2 sm:mb-4" style={{ color: 'rgb(75, 85, 99)' }}>{t.allExpensesPaid}</p>
             <div className="flex items-center justify-center gap-2">
               <Image
                 src={"/icons/red_symbol.png"}
                 height={40}
                 width={40}
-                className='w-10 h-10'
+                className='w-6 h-6 sm:w-10 sm:h-10'
                 alt='Red symbol'
               />
-              <span className="text-2xl font-bold" style={{ color: 'rgb(220, 38, 38)' }}>
+              <span className="text-xl sm:text-2xl font-bold" style={{ color: 'rgb(220, 38, 38)' }}>
                 {reportData?.recordedFinancialBalance?.toFixed(2) || '0.00'}
               </span>
             </div>
@@ -476,51 +488,128 @@ export default function Reports() {
 
         {/* Cars Serviced */}
         <div className="">
-          <div className="rounded-lg py-4 px-6 flex flex-col sm:flex-row justify-between items-center" style={{ backgroundColor: 'rgb(229, 231, 235)' }}>
-            <div className="text-2xl flex items-center gap-4 font-bold mb-4 sm:mb-0" style={{ color: 'rgb(31, 41, 55)' }}>
+          <div className="rounded-lg py-3 sm:py-4 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center" style={{ backgroundColor: 'rgb(229, 231, 235)' }}>
+            <div className="text-lg sm:text-2xl flex items-center gap-2 sm:gap-4 font-bold mb-2 sm:mb-0" style={{ color: 'rgb(31, 41, 55)' }}>
               <div>{t.cars}</div> <div className={isArabic ? 'mr-4' : 'ml-4'}>{reportData?.numberOfCars || 0}</div>
             </div>
-            <div className="text-xl font-bold text-center sm:text-right" style={{ color: 'rgb(31, 41, 55)' }}>
+            <div className="text-base sm:text-xl font-bold text-center sm:text-right" style={{ color: 'rgb(31, 41, 55)' }}>
               {t.numberOfCarsServiced}
             </div>
           </div>
 
-          {/* Footer Section */}
-          <section className="relative w-full h-20 overflow-hidden mt-3" data-footer-section>
-            <div className="absolute inset-0 w-full">
-              <div className="flex items-center justify-between px-10 h-1/2 gap-2 pl-[24%] py-2" style={{ opacity: 0.4 }}></div>
-              <div className="flex items-center justify-between px-10 h-1/2 pl-[30%]" style={{ backgroundColor: 'rgb(203, 54, 64)' }} data-red-section>
-                <h1 className="text-base font-medium" style={{ color: 'rgb(255, 255, 255)' }}>
-                  {reportData?.workshop?.contact || 'Contact Number'}
-                </h1>
-                <Image
-                  src="/icons/footerCommunications.png"
-                  alt="Footer communications"
-                  width={100}
-                  height={24}
-                  className="h-6 w-auto"
-                />
-                <h1 className="text-base font-medium" style={{ color: 'rgb(255, 255, 255)' }}>
-                  {reportData?.workshop?.address || 'Business Address'}
-                </h1>
+          {/* Responsive footer — shown on screen, hidden in PDF */}
+          <section className="relative w-full h-[100px] md:h-20 overflow-hidden mt-6" data-footer-section>
+            <div className="absolute inset-0 w-full flex flex-col">
+              {/* Top half - light divider */}
+              <div className="h-1/2 w-full" style={{ opacity: 0.1, borderBottom: '1px solid rgba(0,0,0,0.1)' }}></div>
+
+              {/* Bottom half - red contact bar */}
+              <div className="h-1/2 w-full" style={{ backgroundColor: 'rgb(203, 54, 64)' }} data-red-section>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 w-full h-full py-1 px-4 pl-[46%] sm:pl-[40%] md:pl-[32%] justify-between items-center sm:pr-10">
+                  <h1 className="text-[9px] sm:text-xs md:text-base font-medium whitespace-nowrap" style={{ color: 'rgb(255, 255, 255)' }}>
+                    {reportData?.workshop?.contact || 'Contact Number'}
+                  </h1>
+                  <Image
+                    src="/icons/footerCommunications.png"
+                    alt="Footer communications"
+                    width={100}
+                    height={24}
+                    className="h-2.5 sm:h-4 md:h-6 w-auto object-contain"
+                  />
+                  <h1 className="text-[9px] sm:text-xs md:text-base font-medium truncate max-w-[100px] sm:max-w-[150px] md:max-w-none" style={{ color: 'rgb(255, 255, 255)' }}>
+                    {reportData?.workshop?.address || 'Business Address'}
+                  </h1>
+                </div>
               </div>
             </div>
+
+            {/* Blue overlapping section */}
             <div
-              className="relative z-10 h-full flex flex-col justify-center text-start pl-4 text-xs font-medium"
+              className="relative z-10 h-full flex flex-col justify-center text-start pl-3 sm:pl-6 text-[9px] sm:text-[11px] md:text-xs font-bold gap-0.5 w-[45%] sm:w-[40%] md:w-[32%] max-w-[45%] sm:max-w-[40%] md:max-w-[32%]"
               style={{
-                width: '32%',
                 backgroundColor: 'rgb(23, 113, 183)',
                 color: 'rgb(255, 255, 255)',
-                clipPath: "polygon(0 0, 75% 0, 95% 100%, 0 100%)",
+                clipPath: "polygon(0 0, 80% 0, 95% 100%, 0 100%)",
               }}
               data-blue-section
             >
-              <h1>{t.footerText1}</h1>
-              <h1>{t.footerText2}</h1>
-              <h1>{t.footerText3}</h1>
-              <h1>{t.footerText4}</h1>
+              <div className="md:contents flex flex-col justify-center h-full">
+                <h1 className="leading-tight">{t.footerText1}</h1>
+                <h1 className="leading-tight">{t.footerText2}</h1>
+                <h1 className="leading-tight">{t.footerText3}</h1>
+                <h1 className="leading-tight">{t.footerText4}</h1>
+              </div>
             </div>
           </section>
+
+          {/* PDF-only footer — hidden on screen, shown during PDF capture */}
+          <div
+            data-pdf-footer
+            style={{
+              display: 'none',
+              position: 'relative',
+              width: '100%',
+              height: '100px',
+              overflow: 'hidden',
+              marginTop: '1.5rem',
+            }}
+          >
+            {/* Top half — light divider */}
+            <div style={{ height: '50px', width: '100%', borderBottom: '1px solid rgba(0,0,0,0.1)' }}></div>
+
+            {/* Bottom half — red contact bar (strictly 50px tall, overflow hidden) */}
+            <div style={{
+              height: '50px',
+              width: '100%',
+              backgroundColor: 'rgb(203, 54, 64)',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingLeft: '34%',
+              paddingRight: '2rem',
+              gap: '0.75rem',
+              boxSizing: 'border-box',
+            }}>
+              <span style={{ fontSize: '12px', color: 'rgb(255,255,255)', fontWeight: '500', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {reportData?.workshop?.contact || 'Contact Number'}
+              </span>
+              <img
+                src="/icons/footerCommunications.png"
+                alt="Footer communications"
+                style={{ height: '18px', width: 'auto', display: 'inline-block', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: '12px', color: 'rgb(255,255,255)', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0 }}>
+                {reportData?.workshop?.address || 'Business Address'}
+              </span>
+            </div>
+
+            {/* Blue overlapping banner — absolutely covers full height on the left */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                height: '100%',
+                width: '32%',
+                backgroundColor: 'rgb(23, 113, 183)',
+                clipPath: 'polygon(0 0, 80% 0, 95% 100%, 0 100%)',
+                paddingLeft: '1.25rem',
+                paddingRight: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: '1px',
+                overflow: 'hidden',
+                boxSizing: 'border-box',
+              }}
+            >
+              <span style={{ fontSize: '9px', color: 'rgb(255,255,255)', fontWeight: 'bold', lineHeight: '1.4', whiteSpace: 'nowrap' }}>{t.footerText1}</span>
+              <span style={{ fontSize: '9px', color: 'rgb(255,255,255)', fontWeight: 'bold', lineHeight: '1.4', whiteSpace: 'nowrap' }}>{t.footerText2}</span>
+              <span style={{ fontSize: '9px', color: 'rgb(255,255,255)', fontWeight: 'bold', lineHeight: '1.4', whiteSpace: 'nowrap' }}>{t.footerText3}</span>
+              <span style={{ fontSize: '9px', color: 'rgb(255,255,255)', fontWeight: 'bold', lineHeight: '1.4', whiteSpace: 'nowrap' }}>{t.footerText4}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

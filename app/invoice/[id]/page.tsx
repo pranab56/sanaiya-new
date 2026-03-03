@@ -36,7 +36,7 @@ const Page = () => {
   const id = params.id;
   const providerWorkShopId = searchParams.get("providerWorkShopId");
   const { data, isLoading } = useGetInvoiceQuery({ id: id, providerWorkShopId: providerWorkShopId });
-  const invoiceRef = React.useRef(null);
+  const invoiceRef = React.useRef<HTMLDivElement>(null);
 
 
   const handleDownloadPDF = async () => {
@@ -45,69 +45,138 @@ const Page = () => {
       return null
     }
 
+    // Wait a brief moment to ensure all images are fully loaded and rendered
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     const canvas = await html2canvas(element, {
       backgroundColor: "#ffffff",
-      scale: 2,
+      scale: 3, // Increased scale for better image quality
       useCORS: true,
-      onclone: (doc) => {
-        const all = doc.querySelectorAll("*");
+      allowTaint: true,
+      logging: false,
+      windowWidth: 1024, // Use a fixed desktop width for capturing
+      windowHeight: element.scrollHeight,
+      onclone: (clonedDoc: Document) => {
+        const clonedElement = clonedDoc.querySelector('#invoice-container') as HTMLElement;
+        if (!clonedElement) return;
 
+        // Force specific width for consistency
+        clonedElement.style.width = '816px';
+        clonedElement.style.maxWidth = '816px';
+        clonedElement.style.margin = '0 auto';
+
+        const all = clonedDoc.querySelectorAll("*");
         all.forEach((el) => {
           const htmlEl = el as HTMLElement;
-          const styles = getComputedStyle(htmlEl);
+          try {
+            const styles = getComputedStyle(htmlEl);
 
-          // text color
-          if (
-            styles.color.includes("lab") ||
-            styles.color.includes("oklch")
-          ) {
-            htmlEl.style.color = "rgb(0,0,0)";
-          }
+            // Fix colors specifically for PDF
+            const isRedText = htmlEl.classList.contains('text-red-600') ||
+              htmlEl.classList.contains('text-red-500') ||
+              htmlEl.classList.contains('text-[#CB3640]');
 
-          // background color
-          if (
-            styles.backgroundColor.includes("lab") ||
-            styles.backgroundColor.includes("oklch")
-          ) {
-            htmlEl.style.backgroundColor = "rgb(255,255,255)";
-          }
+            if (isRedText || styles.color.includes("lab") || styles.color.includes("oklch")) {
+              if (isRedText) {
+                htmlEl.style.color = "rgb(203, 54, 64)"; // Use the primary red
+              } else {
+                htmlEl.style.color = "rgb(0,0,0)";
+              }
+            }
 
-          // border color
-          if (
-            styles.borderColor.includes("lab") ||
-            styles.borderColor.includes("oklch")
-          ) {
-            htmlEl.style.borderColor = "rgb(200,200,200)";
+            if (styles.backgroundColor.includes("lab") || styles.backgroundColor.includes("oklch")) {
+              if (htmlEl.classList.contains('bg-[#CB3640]') || htmlEl.classList.contains('bg-red-600') || htmlEl.classList.contains('bg-red-500')) {
+                htmlEl.style.backgroundColor = "rgb(203, 54, 64)";
+              } else if (htmlEl.classList.contains('bg-[#1771B7]') || htmlEl.classList.contains('bg-blue-600')) {
+                htmlEl.style.backgroundColor = "rgb(23, 113, 183)";
+              } else if (htmlEl.classList.contains('bg-gray-100')) {
+                htmlEl.style.backgroundColor = "rgb(243, 244, 246)";
+              } else if (htmlEl.classList.contains('bg-gray-200')) {
+                htmlEl.style.backgroundColor = "rgb(229, 231, 235)";
+              } else {
+                htmlEl.style.backgroundColor = "transparent";
+              }
+            }
 
+            if (styles.borderColor.includes("lab") || styles.borderColor.includes("oklch")) {
+              htmlEl.style.borderColor = "rgb(209, 213, 219)";
+            }
+
+            // Surgical Image Fixes
+            if (htmlEl.tagName === 'IMG') {
+              const isInsidePdfFooter = htmlEl.closest('[data-pdf-footer]');
+              if (!isInsidePdfFooter) {
+                const img = htmlEl as HTMLImageElement;
+
+                // Logo and QR code
+                if (htmlEl.classList.contains('w-24')) {
+                  img.style.width = '100px';
+                  img.style.height = '100px';
+                  img.style.maxWidth = 'none';
+                }
+                // Brand Logo
+                else if (htmlEl.classList.contains('w-10') || htmlEl.classList.contains('w-14')) {
+                  img.style.width = '60px';
+                  img.style.minWidth = '60px';
+                  img.style.height = '60px';
+                  img.style.maxWidth = 'none';
+                }
+                // Totals Section Icons (Symbol) - FIXED for Mobile PDF
+                else if (htmlEl.classList.contains('h-8') || htmlEl.classList.contains('h-9')) {
+                  img.style.width = '36px';
+                  img.style.height = '36px';
+                  img.style.minWidth = '36px';
+                  img.style.maxWidth = 'none';
+                }
+                else {
+                  img.style.maxWidth = '100%';
+                  img.style.height = 'auto';
+                }
+                img.style.display = 'inline-block';
+              }
+            }
+
+            // Force desktop layout (Flex and Grid)
+            if (htmlEl.classList.contains('flex-col') && htmlEl.classList.contains('sm:flex-row')) {
+              htmlEl.style.display = 'flex';
+              htmlEl.style.flexDirection = 'row';
+            }
+            if (htmlEl.classList.contains('grid-cols-1') && htmlEl.classList.contains('lg:grid-cols-2')) {
+              htmlEl.style.display = 'grid';
+              htmlEl.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+              htmlEl.style.gap = '1.5rem';
+              htmlEl.style.width = '100%';
+            }
+          } catch (e) {
+            console.warn(e);
           }
         });
+
+        // Swap footers
+        const screenFooter = clonedDoc.querySelector('[data-footer-section]') as HTMLElement;
+        const pdfFooter = clonedDoc.querySelector('[data-pdf-footer]') as HTMLElement;
+        if (screenFooter) screenFooter.style.display = 'none';
+        if (pdfFooter) pdfFooter.style.display = 'block';
       },
     });
 
-    const imgData = canvas.toDataURL("image/png");
-
+    const imgData = canvas.toDataURL("image/png", 1.0);
     const pdf = new jsPDF("p", "mm", "a4");
 
-    const pageWidth = 210; // A4 width in mm
-    const pageHeight = 297; // A4 height in mm
-
-    // Original image size
+    const pageWidth = 210;
+    const pageHeight = 297;
     const imgWidthPx = canvas.width;
     const imgHeightPx = canvas.height;
 
-    // Scale to fit exactly in A4
     const scale = Math.min(pageWidth / imgWidthPx, pageHeight / imgHeightPx);
-
     const pdfWidth = imgWidthPx * scale;
     const pdfHeight = imgHeightPx * scale;
 
-    // Optional: center content horizontally
     const marginX = (pageWidth - pdfWidth) / 2;
-    const marginY = (pageHeight - pdfHeight) / 2;
+    const marginY = 0; // Top align for invoices
 
     pdf.addImage(imgData, "PNG", marginX, marginY, pdfWidth, pdfHeight);
-
-    pdf.save("invoice.pdf");
+    pdf.save(`invoice-${invoiceData?.recieptNumber || 'output'}.pdf`);
 
   };
 
@@ -237,31 +306,31 @@ const Page = () => {
 
           {/* Vehicle Information Bar */}
 
-          <section className='flex flex-col md:flex-row items-stretch md:items-end justify-between gap-4 md:gap-2 h-auto md:h-25 print:flex-row print:h-25'>
-            <section className="bg-gray-200 rounded-sm flex items-center justify-between w-full md:w-8/12 lg:w-9/12 px-4 py-2 md:py-0 print:w-9/12">
-              <div className="flex items-center gap-6 print:gap-6">
-                {/* Toyota Logo */}
-                <div className="print:p-4">
+          <section className='flex flex-col md:flex-row items-stretch md:items-end justify-between gap-4 h-auto print:flex-row'>
+            <section className="bg-gray-100 rounded-sm flex items-center justify-between w-full md:w-[65%] lg:w-[70%] px-4 py-3 md:py-2 print:w-[70%]">
+              <div className="flex items-center gap-4 sm:gap-6 print:gap-6">
+                {/* Brand Logo */}
+                <div className="shrink-0">
                   {invoiceData?.car?.brand?.image && (
                     <Image
                       src={baseURL + invoiceData.car.brand.image}
-                      height={1000}
-                      width={1000}
-                      className='w-14 h-14 py-2'
+                      height={40}
+                      width={40}
+                      className='w-10 h-10 sm:w-14 sm:h-14 object-contain'
                       alt='Brand Logo'
                     />
                   )}
                 </div>
 
-                <div className="text-xl font-bold print:text-xl">{invoiceData?.car?.brand?.title || 'N/A'}</div>
+                <div className="text-base sm:text-xl font-bold print:text-xl truncate">{invoiceData?.car?.brand?.title || 'N/A'}</div>
               </div>
 
-              <div className="text-xl font-bold print:text-xl">{invoiceData?.car?.model?.title || 'N/A'}</div>
+              <div className="text-base sm:text-xl font-bold print:text-xl truncate">{invoiceData?.car?.model?.title || 'N/A'}</div>
 
-              <div className="text-xl font-bold print:text-xl">{invoiceData?.car?.year || 'N/A'}</div>
+              <div className="text-base sm:text-xl font-bold print:text-xl">{invoiceData?.car?.year || 'N/A'}</div>
             </section>
 
-            <section className='w-full md:w-3/12 lg:w-4/12 print:w-4/12 mt-4 md:mt-0 print:mt-0'>
+            <section className='w-full md:w-[32%] lg:w-[28%] print:w-[28%]'>
 
               <div className="">
                 <div className="flex flex-col gap-2 print:gap-2">
@@ -350,7 +419,7 @@ const Page = () => {
         </div>
         {/* -------------------------------------------------- */}
 
-        <div className="print:overflow-visible">
+        <div className="print:overflow-visible mt-8">
           {/* Works Table */}
           <div className="mb-8 print:mb-8 overflow-x-auto">
             <table className="w-full border-collapse min-w-[700px] print:min-w-0">
@@ -449,8 +518,8 @@ const Page = () => {
 
         {/* ------------------------------------------------ */}
 
-        <div className="print:overflow-visible">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:grid-cols-2">
+        <div className="print:overflow-visible mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 print:grid-cols-2">
             {/* Right Section - Warranty Terms */}
             <div className="space-y-4 print:space-y-4">
               <div className='border p-2 rounded print:p-2'>
@@ -588,18 +657,16 @@ const Page = () => {
 
         {/* ------------------------------------------------ */}
 
-        <section>
-          <section className="relative w-full h-auto sm:h-20 overflow-hidden print:h-24">
+        <section className="mt-8">
+          <section className="relative w-full h-20 overflow-hidden" data-footer-section>
             {/* RIGHT FULL WIDTH SECTION */}
-            <div className="absolute inset-0 w-full print:w-full">
-              {/* Logos */}
-              <div className="flex items-center justify-between px-10 h-1/2 opacity-40 gap-2 pl-[29%] py-2 print:pl-[29%] print:py-2">
-                {/* Logos section */}
-              </div>
+            <div className="absolute inset-0 w-full h-full flex flex-col justify-end">
+              {/* Spacer for top half */}
+              <div className="h-1/2 w-full opacity-10 border-b border-black"></div>
 
               {/* Red Bar */}
-              <div className="bg-[#CB3640] flex flex-col sm:flex-row items-center justify-between px-4 sm:px-10 h-auto sm:h-1/2 py-2 sm:py-0 pl-4 sm:pl-[32%] print:pl-[32%]">
-                <h1 className="text-xs sm:text-base font-medium text-white print:text-base order-2 sm:order-1">
+              <div className="bg-[#CB3640] flex items-center justify-between px-4 sm:px-10 h-1/2 pl-[38%] md:pl-[34%] gap-2 sm:gap-4">
+                <h1 className="text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-white whitespace-nowrap">
                   {invoiceData?.providerWorkShopId?.contact || 'N/A'}
                 </h1>
 
@@ -608,26 +675,93 @@ const Page = () => {
                   alt="Footer communications"
                   width={200}
                   height={50}
-                  className="h-4 sm:h-6 w-auto print:h-7 mb-1 sm:mb-0 order-1 sm:order-2"
+                  className="h-4 sm:h-5 md:h-6 w-auto"
                 />
 
-                <h1 className="text-xs sm:text-base font-medium text-white print:text-base order-3">
-                  {data?.data?.providerWorkShopId?.address || "Riyadh - old Industrial - ali st."}
+                <h1 className="text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-white truncate max-w-[100px] sm:max-w-none">
+                  {invoiceData?.providerWorkShopId?.address || "Riyadh-old Industrial"}
                 </h1>
               </div>
             </div>
 
             {/* LEFT BLUE FIXED SECTION */}
             <div
-              className="relative z-10 w-[60%] sm:w-[34%] h-full bg-[#1771B7] flex flex-col justify-center text-start pl-4 sm:pl-2 text-[10px] sm:text-sm font-medium text-white print:w-[34%] print:pl-5 print:text-sm"
+              className="relative z-10 w-[34%] h-full bg-[#1771B7] flex flex-col justify-center text-start pl-3 sm:pl-6 text-[10px] sm:text-xs md:text-sm font-bold text-white"
               style={{
-                clipPath: "polygon(0 0, 75% 0, 100% 100%, 0 100%)",
+                clipPath: "polygon(0 0, 80% 0, 100% 100%, 0 100%)",
               }}
             >
-              <h1>Thank you for your visit and</h1>
-              <h1>we are always at your service</h1>
+              <h1 className="leading-tight">Thank you for your visit</h1>
+              <h1 className="leading-tight">we are at your service</h1>
             </div>
           </section>
+
+          {/* PDF-only footer — hidden on screen, shown during PDF capture */}
+          <div
+            data-pdf-footer
+            style={{
+              display: 'none',
+              position: 'relative',
+              width: '100%',
+              height: '100px',
+              overflow: 'hidden',
+              marginTop: '1.5rem',
+            }}
+          >
+            {/* Top half — light divider */}
+            <div style={{ height: '50px', width: '100%', borderBottom: '1px solid rgba(0,0,0,0.1)' }}></div>
+
+            {/* Bottom half — red contact bar (strictly 50px tall, overflow hidden) */}
+            <div style={{
+              height: '50px',
+              width: '100%',
+              backgroundColor: 'rgb(203, 54, 64)',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingLeft: '34%',
+              paddingRight: '2rem',
+              gap: '0.75rem',
+              boxSizing: 'border-box',
+            }}>
+              <span style={{ fontSize: '14px', color: 'rgb(255,255,255)', fontWeight: '500', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {invoiceData?.providerWorkShopId?.contact || 'Contact Number'}
+              </span>
+              <img
+                src="/icons/footerCommunications.png"
+                alt="Footer communications"
+                style={{ height: '22px', width: 'auto', display: 'inline-block', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: '14px', color: 'rgb(255,255,255)', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0 }}>
+                {invoiceData?.providerWorkShopId?.address || 'Business Address'}
+              </span>
+            </div>
+
+            {/* Blue overlapping banner — absolutely covers full height on the left */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                height: '100%',
+                width: '32%',
+                backgroundColor: 'rgb(23, 113, 183)',
+                clipPath: 'polygon(0 0, 80% 0, 95% 100%, 0 100%)',
+                paddingLeft: '1.5rem',
+                paddingRight: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: '2px',
+                overflow: 'hidden',
+                boxSizing: 'border-box',
+              }}
+            >
+              <span style={{ fontSize: '12px', color: 'rgb(255,255,255)', fontWeight: 'bold', lineHeight: '1.4', whiteSpace: 'nowrap' }}>Thank you for your visit and</span>
+              <span style={{ fontSize: '12px', color: 'rgb(255,255,255)', fontWeight: 'bold', lineHeight: '1.4', whiteSpace: 'nowrap' }}>we are always at your service</span>
+            </div>
+          </div>
         </section>
       </div>
       {/* end */}
