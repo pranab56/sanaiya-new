@@ -54,16 +54,14 @@ const Page = () => {
       useCORS: true,
       allowTaint: true,
       logging: false,
-      windowWidth: 1024, // Use a fixed desktop width for capturing
+      // Removed windowWidth to let html2canvas use the exact current viewport size natively
       windowHeight: element.scrollHeight,
       onclone: (clonedDoc: Document) => {
         const clonedElement = clonedDoc.querySelector('#invoice-container') as HTMLElement;
         if (!clonedElement) return;
 
-        // Force specific width for consistency
-        clonedElement.style.width = '816px';
-        clonedElement.style.maxWidth = '816px';
-        clonedElement.style.margin = '0 auto';
+        // Preserve native rendered styles instead of forcing A4 dimensions
+        clonedElement.style.overflow = 'visible';
 
         const all = clonedDoc.querySelectorAll("*");
         all.forEach((el) => {
@@ -71,80 +69,48 @@ const Page = () => {
           try {
             const styles = getComputedStyle(htmlEl);
 
-            // Fix colors specifically for PDF
+            // ── Color fixes (oklch / lab not rendered by html2canvas) ──
             const isRedText = htmlEl.classList.contains('text-red-600') ||
               htmlEl.classList.contains('text-red-500') ||
               htmlEl.classList.contains('text-[#CB3640]');
 
-            if (isRedText || styles.color.includes("lab") || styles.color.includes("oklch")) {
-              if (isRedText) {
-                htmlEl.style.color = "rgb(203, 54, 64)"; // Use the primary red
-              } else {
-                htmlEl.style.color = "rgb(0,0,0)";
-              }
+            if (isRedText) {
+              htmlEl.style.color = 'rgb(203, 54, 64)';
+            } else if (styles.color.includes('lab') || styles.color.includes('oklch')) {
+              htmlEl.style.color = 'rgb(0,0,0)';
             }
 
-            if (styles.backgroundColor.includes("lab") || styles.backgroundColor.includes("oklch")) {
-              if (htmlEl.classList.contains('bg-[#CB3640]') || htmlEl.classList.contains('bg-red-600') || htmlEl.classList.contains('bg-red-500')) {
-                htmlEl.style.backgroundColor = "rgb(203, 54, 64)";
+            if (styles.backgroundColor.includes('lab') || styles.backgroundColor.includes('oklch')) {
+              if (htmlEl.classList.contains('bg-[#CB3640]') || htmlEl.classList.contains('bg-red-600')) {
+                htmlEl.style.backgroundColor = 'rgb(203, 54, 64)';
               } else if (htmlEl.classList.contains('bg-[#1771B7]') || htmlEl.classList.contains('bg-blue-600')) {
-                htmlEl.style.backgroundColor = "rgb(23, 113, 183)";
+                htmlEl.style.backgroundColor = 'rgb(23, 113, 183)';
               } else if (htmlEl.classList.contains('bg-gray-100')) {
-                htmlEl.style.backgroundColor = "rgb(243, 244, 246)";
+                htmlEl.style.backgroundColor = 'rgb(243, 244, 246)';
               } else if (htmlEl.classList.contains('bg-gray-200')) {
-                htmlEl.style.backgroundColor = "rgb(229, 231, 235)";
+                htmlEl.style.backgroundColor = 'rgb(229, 231, 235)';
               } else {
-                htmlEl.style.backgroundColor = "transparent";
+                htmlEl.style.backgroundColor = 'transparent';
               }
             }
 
-            if (styles.borderColor.includes("lab") || styles.borderColor.includes("oklch")) {
-              htmlEl.style.borderColor = "rgb(209, 213, 219)";
+            if (styles.borderColor.includes('lab') || styles.borderColor.includes('oklch')) {
+              htmlEl.style.borderColor = 'rgb(209, 213, 219)';
             }
 
-            // Surgical Image Fixes
+            // ── Image fixes (keep basic scaling constraint but don't force desktop sizes) ──
             if (htmlEl.tagName === 'IMG') {
               const isInsidePdfFooter = htmlEl.closest('[data-pdf-footer]');
               if (!isInsidePdfFooter) {
                 const img = htmlEl as HTMLImageElement;
-
-                // Logo and QR code
-                if (htmlEl.classList.contains('w-24')) {
-                  img.style.width = '100px';
-                  img.style.height = '100px';
-                  img.style.maxWidth = 'none';
-                }
-                // Brand Logo
-                else if (htmlEl.classList.contains('w-10') || htmlEl.classList.contains('w-14')) {
-                  img.style.width = '60px';
-                  img.style.minWidth = '60px';
-                  img.style.height = '60px';
-                  img.style.maxWidth = 'none';
-                }
-                // Totals Section Icons (Symbol) - FIXED for Mobile PDF
-                else if (htmlEl.classList.contains('h-8') || htmlEl.classList.contains('h-9')) {
-                  img.style.width = '36px';
-                  img.style.height = '36px';
-                  img.style.minWidth = '36px';
-                  img.style.maxWidth = 'none';
-                }
-                else {
-                  img.style.maxWidth = '100%';
-                  img.style.height = 'auto';
-                }
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
                 img.style.display = 'inline-block';
               }
             }
-
-            // Force desktop layout (Flex and Grid)
-            if (htmlEl.classList.contains('flex-col') && htmlEl.classList.contains('sm:flex-row')) {
-              htmlEl.style.display = 'flex';
-              htmlEl.style.flexDirection = 'row';
-            }
-            if (htmlEl.classList.contains('grid-cols-1') && htmlEl.classList.contains('lg:grid-cols-2')) {
-              htmlEl.style.display = 'grid';
-              htmlEl.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
-              htmlEl.style.gap = '1.5rem';
+            // Removed manual flex/grid overrides so the native Tailwind UI renders exactly as seen.
+            if (htmlEl.tagName === 'TABLE') {
+              htmlEl.style.minWidth = '0';
               htmlEl.style.width = '100%';
             }
           } catch (e) {
@@ -152,7 +118,7 @@ const Page = () => {
           }
         });
 
-        // Swap footers
+        // Swap screen footer ↔ PDF footer
         const screenFooter = clonedDoc.querySelector('[data-footer-section]') as HTMLElement;
         const pdfFooter = clonedDoc.querySelector('[data-pdf-footer]') as HTMLElement;
         if (screenFooter) screenFooter.style.display = 'none';
@@ -210,9 +176,9 @@ const Page = () => {
   const invoiceData = data.data;
 
   return (
-    <div className='items-center lg:items-start flex flex-col lg:flex-row-reverse justify-center lg:justify-evenly p-4 gap-6 bg-gray-50 min-h-screen'>
+    <div className='flex flex-col lg:flex-row-reverse items-center lg:items-start justify-center lg:justify-evenly p-3 sm:p-4 gap-4 sm:gap-6 bg-gray-50 min-h-screen overflow-x-hidden'>
       <button
-        className='border border-gray-300 text-sm font-semibold cursor-pointer px-10 py-3 shadow-md hover:shadow-lg w-full lg:w-auto rounded-md bg-white transition-all duration-200 active:scale-95'
+        className='border border-gray-300 text-sm font-semibold cursor-pointer px-6 sm:px-10 py-3 shadow-md hover:shadow-lg w-full lg:w-auto rounded-md bg-white transition-all duration-200 active:scale-95'
         onClick={handleDownloadPDF}
         type='button'
       >
@@ -223,49 +189,107 @@ const Page = () => {
 
       <div
         ref={invoiceRef}
-        className="w-full max-w-4xl mx-auto flex flex-col gap-2 bg-white p-4 sm:p-8 border border-gray-200 shadow-sm print:max-w-[210mm] print:mx-0 print:p-0 print:border-none print:shadow-none"
+        className="w-full max-w-4xl mx-auto flex flex-col gap-2 bg-white p-3 sm:p-8 border border-gray-200 shadow-sm overflow-hidden print:max-w-[210mm] print:mx-0 print:p-0 print:border-none print:shadow-none"
         id="invoice-container"
       >
-        {/* Your existing invoice content remains exactly the same */}
-        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5 print:flex-row">
-          <div className="shrink-0">
+        {/* ── HEADER ──
+            Mobile  : [Logo + QR grouped left] | [Workshop info right]
+            Desktop : [Logo] | [Workshop info center] | [QR right]  — unchanged
+        */}
+
+        {/* MOBILE layout (hidden on sm+) */}
+        <div className="flex sm:hidden flex-row items-center gap-3">
+          {/* Left group: Logo and QR side by side */}
+          <div className="shrink-0 flex flex-row items-center gap-1.5">
+            {/* Logo */}
             <Image
               src={`${baseURL}${invoiceData?.image}`}
-              height={1000}
-              width={1000}
-              className='w-24 h-24 print:w-24 print:h-24'
-              alt='Logo One'
+              height={200}
+              width={200}
+              className='w-14 h-14 object-contain'
+              alt='Workshop Logo'
               priority
             />
-          </div>
-          <div className="shrink-0">
+            {/* QR — with border frame on mobile */}
             {invoiceData?.invoiceQRLink && (
-              <Image
-                src={baseURL + invoiceData.invoiceQRLink}
-                height={1000}
-                width={1000}
-                className='w-24 h-24 print:w-24 print:h-24'
-                alt='QR Code'
-                priority
-              />
+              <div className="border-2 border-gray-400 rounded-sm p-0.5">
+                <Image
+                  src={baseURL + invoiceData.invoiceQRLink}
+                  height={200}
+                  width={200}
+                  className='w-14 h-14 object-contain'
+                  alt='QR Code'
+                  priority
+                />
+              </div>
             )}
           </div>
-          <div className="flex-1 text-center sm:text-right print:text-right">
-            <p className=" text-lg sm:text-xl mb-1 font-medium print:text-base">
+
+          {/* Right: Workshop info */}
+          <div className="flex-1 text-right">
+            <p className="text-xs font-semibold leading-tight mb-0.5">
               {invoiceData?.providerWorkShopId?.workshopNameEnglish || 'N/A'}
             </p>
-            <h1 className="text-md sm:text-lg text-gray-900 mb-2 print:text-2xl">
+            <h1 className="text-sm font-bold text-gray-900 mb-1 leading-tight">
               {invoiceData?.providerWorkShopId?.workshopNameArabic || 'N/A'}
             </h1>
+            <p className="text-[9px] text-gray-500 leading-snug">
+              CR No: <span className="font-medium text-gray-700">{invoiceData?.providerWorkShopId?.crn || 'N/A'}</span>
+            </p>
+            <p className="text-[9px] text-gray-500 leading-snug">
+              VAT No: <span className="font-medium text-gray-700">{invoiceData?.providerWorkShopId?.taxVatNumber || 'N/A'}</span>
+            </p>
+            <p className="text-[9px] text-gray-500 leading-snug">
+              iBan: <span className="font-medium text-gray-700 break-all">{invoiceData?.providerWorkShopId?.bankAccountNumber || 'N/A'}</span>
+            </p>
+          </div>
+        </div>
 
-            <p className="text-[10px] sm:text-xs font-normal mb-1 sm:mb-3 print:text-xs">
-              CR No : {invoiceData?.providerWorkShopId?.crn || 'N/A'}
+        {/* DESKTOP layout (hidden on mobile, visible sm+) */}
+        <div className="hidden sm:flex flex-row items-center justify-between gap-5 print:flex">
+          <div className="flex items-center gap-5">
+            {/* Logo */}
+            <div className="shrink-0">
+              <Image
+                src={`${baseURL}${invoiceData?.image}`}
+                height={1000}
+                width={1000}
+                className='w-24 h-24 object-contain print:w-24 print:h-24'
+                alt='Workshop Logo'
+                priority
+              />
+            </div>
+            {/* QR */}
+            <div className="shrink-0">
+              {invoiceData?.invoiceQRLink && (
+                <Image
+                  src={baseURL + invoiceData.invoiceQRLink}
+                  height={1000}
+                  width={1000}
+                  className='w-24 h-24 object-contain print:w-24 print:h-24'
+                  alt='QR Code'
+                  priority
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Workshop Info */}
+          <div className="flex-1 text-center sm:text-right print:text-right">
+            <p className="text-xl font-semibold mb-1 print:text-base">
+              {invoiceData?.providerWorkShopId?.workshopNameEnglish || 'N/A'}
             </p>
-            <p className="text-[10px] sm:text-xs font-normal mb-1 sm:mb-3 print:text-xs">
-              VAT No : {invoiceData?.providerWorkShopId?.taxVatNumber || 'N/A'}
+            <h1 className="text-lg font-bold text-gray-900 mb-2 print:text-2xl">
+              {invoiceData?.providerWorkShopId?.workshopNameArabic || 'N/A'}
+            </h1>
+            <p className="text-xs text-gray-500 mb-1 print:text-xs">
+              CR No: <span className="font-medium text-gray-700">{invoiceData?.providerWorkShopId?.crn || 'N/A'}</span>
             </p>
-            <p className="text-[10px] sm:text-xs font-normal mb-1 sm:mb-3 print:text-xs">
-              iBan No : {invoiceData?.providerWorkShopId?.bankAccountNumber || 'N/A'}
+            <p className="text-xs text-gray-500 mb-1 print:text-xs">
+              VAT No: <span className="font-medium text-gray-700">{invoiceData?.providerWorkShopId?.taxVatNumber || 'N/A'}</span>
+            </p>
+            <p className="text-xs text-gray-500 print:text-xs">
+              iBan No: <span className="font-medium text-gray-700">{invoiceData?.providerWorkShopId?.bankAccountNumber || 'N/A'}</span>
             </p>
           </div>
         </div>
@@ -306,8 +330,8 @@ const Page = () => {
 
           {/* Vehicle Information Bar */}
 
-          <section className='flex flex-col md:flex-row items-stretch md:items-end justify-between gap-4 h-auto print:flex-row'>
-            <section className="bg-gray-100 rounded-sm flex items-center justify-between w-full md:w-[65%] lg:w-[70%] px-4 py-3 md:py-2 print:w-[70%]">
+          <section className='flex flex-col sm:flex-row items-stretch sm:items-end justify-between gap-3 sm:gap-4 h-auto print:flex-row'>
+            <section className="bg-gray-100 rounded-sm flex items-center justify-between w-full sm:w-[65%] lg:w-[70%] px-3 sm:px-4 py-2 print:w-[70%]">
               <div className="flex items-center gap-4 sm:gap-6 print:gap-6">
                 {/* Brand Logo */}
                 <div className="shrink-0">
@@ -330,7 +354,7 @@ const Page = () => {
               <div className="text-base sm:text-xl font-bold print:text-xl">{invoiceData?.car?.year || 'N/A'}</div>
             </section>
 
-            <section className='w-full md:w-[32%] lg:w-[28%] print:w-[28%]'>
+            <section className='w-full sm:w-[32%] lg:w-[28%] print:w-[28%]'>
 
               <div className="">
                 <div className="flex flex-col gap-2 print:gap-2">
@@ -347,13 +371,13 @@ const Page = () => {
                       {/* Left Column - Numbers and Arabic */}
                       <div className="flex-1 flex flex-col print:flex-col">
                         {/* Top Row */}
-                        <div className="border-b-3 border-gray-600 flex print:flex">
-                          <div className="flex-1 border-r-3 border-gray-600 px-3 py-4 sm:px-6 sm:py-6 flex items-center justify-center print:px-6 print:py-6">
-                            <span className="text-sm sm:text-md font-bold print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberArabic || 'N/A'}</span>
+                        <div className="border-b-3 border-gray-600 flex flex-1 print:flex">
+                          <div className="flex-1 border-r-3 border-gray-600 py-2 px-0 sm:px-3 sm:py-2 flex items-center justify-center print:px-3 print:py-2">
+                            <span className="text-sm sm:text-md font-bold whitespace-nowrap print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberArabic || 'N/A'}</span>
                           </div>
 
-                          <div className="flex-1 border-r-3 border-gray-600 px-3 py-4 sm:px-6 sm:py-6 flex items-center justify-center print:px-6 print:py-6">
-                            <span className="text-sm sm:text-md font-bold tracking-wide print:text-md">
+                          <div className="flex-1 border-r-3 border-gray-600 py-2 px-0 sm:px-3 sm:py-2 flex items-center justify-center print:px-3 print:py-2">
+                            <span className="text-sm sm:text-md font-bold whitespace-nowrap tracking-wide print:text-md">
                               {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[1]
                                 ?.split('').reverse()
                                 .join(' ') || 'N/A'}
@@ -362,12 +386,12 @@ const Page = () => {
                         </div>
 
                         {/* Bottom Row */}
-                        <div className="flex print:flex">
-                          <div className="flex-1 border-r-3 border-gray-600 px-3 py-4 sm:px-6 sm:py-6 flex items-center justify-center print:px-6 print:py-6">
-                            <span className="text-sm sm:text-md font-bold print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberEnglish || 'N/A'}</span>
+                        <div className="flex flex-1 print:flex">
+                          <div className="flex-1 border-r-3 border-gray-600 py-2 px-0 sm:px-3 sm:py-2 flex items-center justify-center print:px-3 print:py-2">
+                            <span className="text-sm sm:text-md font-bold whitespace-nowrap print:text-md">{invoiceData?.car?.plateNumberForSaudi?.numberEnglish || 'N/A'}</span>
                           </div>
-                          <div className="flex-1 border-r-3 border-gray-600 px-3 py-4 sm:px-6 sm:py-6 flex items-center justify-center print:px-6 ">
-                            <span className="text-sm sm:text-md font-bold print:text-md" style={{ fontFamily: 'Arial' }}>
+                          <div className="flex-1 border-r-3 border-gray-600 py-2 px-0 sm:px-3 sm:py-2 flex items-center justify-center print:px-3 print:py-2">
+                            <span className="text-sm sm:text-md font-bold whitespace-nowrap print:text-md" style={{ fontFamily: 'Arial' }}>
                               {invoiceData?.car?.plateNumberForSaudi?.alphabetsCombinations?.[0]
                                 ?.split('')
                                 .join(' ') || 'N/A'}
@@ -396,22 +420,22 @@ const Page = () => {
           </section>
         </div>
 
-        <div className="w-full px-8 py-4 border border-gray-300 rounded print:px-8 print:py-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8 print:flex-row print:gap-8">
+        <div className="w-full px-3 sm:px-8 py-3 sm:py-4 border border-gray-300 rounded print:px-8 print:py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-8 print:flex-row print:gap-8">
             {/* VAT Number */}
-            <div className="flex items-center justify-between w-full md:w-auto gap-4 print:gap-4">
+            <div className="flex items-center justify-between w-full sm:w-auto gap-3 sm:gap-4 print:gap-4">
               <span className="text-gray-900 font-semibold text-xs whitespace-nowrap">VAT -{invoiceData?.client.documentNumber || 'N/A'}</span>
               <span className="text-gray-700 font-medium text-xs whitespace-nowrap">الرقم الضريبي</span>
             </div>
 
             {/* Phone */}
-            <div className="flex items-center justify-between w-full md:w-auto gap-4 print:gap-4 border-t border-b border-gray-100 py-2 md:border-none md:py-0">
+            <div className="flex items-center justify-between w-full sm:w-auto gap-3 sm:gap-4 print:gap-4 border-t border-b border-gray-100 py-2 sm:border-none sm:py-0">
               <span className="text-gray-900 font-semibold whitespace-nowrap">{invoiceData?.client?.clientId?.contact || 'N/A'}</span>
               <span className="text-gray-700 font-medium whitespace-nowrap">الجوال</span>
             </div>
 
             {/* Customer Name */}
-            <div className="flex items-center justify-between w-full md:w-auto gap-4 print:gap-4">
+            <div className="flex items-center justify-between w-full sm:w-auto gap-3 sm:gap-4 print:gap-4">
               <span className="text-gray-700 font-medium whitespace-nowrap">{invoiceData?.customerInvoiceName || 'N/A'}</span>
               <span className="text-gray-900 font-semibold whitespace-nowrap">اسم العميل</span>
             </div>
@@ -419,10 +443,10 @@ const Page = () => {
         </div>
         {/* -------------------------------------------------- */}
 
-        <div className="print:overflow-visible mt-8">
+        <div className="mt-6 sm:mt-8">
           {/* Works Table */}
-          <div className="mb-8 print:mb-8 overflow-x-auto">
-            <table className="w-full border-collapse min-w-[700px] print:min-w-0">
+          <div className="mb-6 sm:mb-8 -mx-3 sm:mx-0 overflow-x-auto">
+            <table className="w-full border-collapse min-w-[560px] sm:min-w-[700px] print:min-w-0">
               <thead>
                 <tr className="bg-[#1771B7] text-white print:bg-[#1771B7]">
                   <th className="border-2 border-white px-4 py-3 text-center font-semibold print:px-4 print:py-3">N</th>
@@ -470,8 +494,8 @@ const Page = () => {
           </div>
 
           {/* Spare Parts Table */}
-          <div className="mb-8 print:mb-8 overflow-x-auto">
-            <table className="w-full border-collapse min-w-[700px] print:min-w-0">
+          <div className="mb-6 sm:mb-8 -mx-3 sm:mx-0 overflow-x-auto">
+            <table className="w-full border-collapse min-w-[560px] sm:min-w-[700px] print:min-w-0">
               <thead>
                 <tr className="bg-[#1771B7] text-white print:bg-[#1771B7]">
                   <th className="border-2 border-white px-4 py-3 text-center font-semibold print:px-4 print:py-3">N</th>
@@ -657,16 +681,16 @@ const Page = () => {
 
         {/* ------------------------------------------------ */}
 
-        <section className="mt-8">
-          <section className="relative w-full h-20 overflow-hidden" data-footer-section>
+        <section className="mt-4 sm:mt-8">
+          <section className="relative w-full h-[60px] sm:h-20 overflow-hidden" data-footer-section>
             {/* RIGHT FULL WIDTH SECTION */}
             <div className="absolute inset-0 w-full h-full flex flex-col justify-end">
               {/* Spacer for top half */}
-              <div className="h-1/2 w-full opacity-10 border-b border-black"></div>
+              <div className="h-[25px] sm:h-1/2 w-full opacity-10 border-b border-black"></div>
 
               {/* Red Bar */}
-              <div className="bg-[#CB3640] flex items-center justify-between px-4 sm:px-10 h-1/2 pl-[38%] md:pl-[34%] gap-2 sm:gap-4">
-                <h1 className="text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-white whitespace-nowrap">
+              <div className="bg-[#CB3640] flex items-center justify-between px-2 sm:px-10 h-[35px] sm:h-1/2 pl-[46%] sm:pl-[42%] md:pl-[34%] gap-1 sm:gap-4">
+                <h1 className="text-[7px] sm:text-xs md:text-sm lg:text-base font-medium text-white whitespace-nowrap">
                   {invoiceData?.providerWorkShopId?.contact || 'N/A'}
                 </h1>
 
@@ -675,10 +699,10 @@ const Page = () => {
                   alt="Footer communications"
                   width={200}
                   height={50}
-                  className="h-4 sm:h-5 md:h-6 w-auto"
+                  className="h-3 sm:h-5 md:h-6 w-auto object-contain flex-shrink-0"
                 />
 
-                <h1 className="text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-white truncate max-w-[100px] sm:max-w-none">
+                <h1 className="text-[7px] sm:text-xs md:text-sm lg:text-base font-medium text-white truncate max-w-[70px] sm:max-w-none">
                   {invoiceData?.providerWorkShopId?.address || "Riyadh-old Industrial"}
                 </h1>
               </div>
@@ -686,9 +710,10 @@ const Page = () => {
 
             {/* LEFT BLUE FIXED SECTION */}
             <div
-              className="relative z-10 w-[34%] h-full bg-[#1771B7] flex flex-col justify-center text-start pl-3 sm:pl-6 text-[10px] sm:text-xs md:text-sm font-bold text-white"
+              className="relative z-10 w-[46%] sm:w-[42%] md:w-[34%] h-full bg-[#1771B7] flex flex-col justify-center text-start pl-2 sm:pl-6 font-bold text-white gap-0.5"
               style={{
                 clipPath: "polygon(0 0, 80% 0, 100% 100%, 0 100%)",
+                fontSize: 'clamp(5px, 1.4vw, 12px)',
               }}
             >
               <h1 className="leading-tight">Thank you for your visit</h1>
