@@ -153,7 +153,7 @@ export default function Reports() {
         allowTaint: false,
         imageTimeout: 0,
         logging: false,
-        // Removed windowWidth to let html2canvas use the exact current viewport size natively
+        windowWidth: 1024,
         windowHeight: element.scrollHeight,
         onclone: (clonedDoc: Document) => {
           const clonedElement = clonedDoc.querySelector('[data-pdf-report]') as HTMLElement;
@@ -167,8 +167,6 @@ export default function Reports() {
           allElements.forEach((el) => {
             const htmlEl = el as HTMLElement;
             try {
-              // Removed manual flex/grid overrides so the native Tailwind UI renders exactly as seen.
-
               // ── Color safety (inline rgb() colors are fine; Tailwind oklch needs override) ──
               const cs = getComputedStyle(htmlEl);
               if (cs.color && (cs.color.includes('oklch') || cs.color.includes('lab'))) {
@@ -180,11 +178,10 @@ export default function Reports() {
               }
 
               // ── Images ──
-              if (htmlEl.tagName === 'IMG' && !htmlEl.closest('[data-pdf-footer]')) {
-                const img = htmlEl as HTMLImageElement;
-                img.style.maxWidth = '12%';
-                img.style.height = 'auto';
-                img.style.display = 'inline-block';
+              // Removed aggressive maxWidth to preserve natural icon sizes
+              if (htmlEl.tagName === 'IMG' && htmlEl.className.includes('object-contain')) {
+                htmlEl.style.maxWidth = '100%';
+                htmlEl.style.height = 'auto';
               }
             } catch (err) {
               console.warn('Error processing element:', err);
@@ -466,17 +463,17 @@ export default function Reports() {
                 display: 'none',
                 position: 'relative',
                 width: '100%',
-                height: '100px',
+                height: '80px',
                 overflow: 'hidden',
                 marginTop: '1.5rem',
               }}
             >
               {/* Top half — light divider */}
-              <div style={{ height: '50px', width: '100%', borderBottom: '1px solid rgba(0,0,0,0.1)' }}></div>
+              <div style={{ height: '40px', width: '100%', borderBottom: '1px solid rgba(0,0,0,0.1)' }}></div>
 
-              {/* Bottom half — red contact bar (strictly 50px tall, overflow hidden) */}
+              {/* Bottom half — red contact bar */}
               <div style={{
-                height: '50px',
+                height: '40px',
                 width: '100%',
                 backgroundColor: 'rgb(203, 54, 64)',
                 overflow: 'hidden',
@@ -485,33 +482,33 @@ export default function Reports() {
                 justifyContent: 'space-between',
                 paddingLeft: '34%',
                 paddingRight: '2rem',
-                gap: '0.75rem',
+                gap: '1rem',
                 boxSizing: 'border-box',
               }}>
-                <span style={{ fontSize: '12px', color: 'rgb(255,255,255)', fontWeight: '500', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <span style={{ fontSize: '14px', color: 'rgb(255,255,255)', fontWeight: '500', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   {reportData?.workshop?.contact || 'Contact Number'}
                 </span>
                 <img
                   src="/icons/footerCommunications.png"
                   alt="Footer communications"
-                  style={{ height: '18px', width: 'auto', display: 'inline-block', flexShrink: 0 }}
+                  style={{ height: '20px', width: 'auto', display: 'inline-block', flexShrink: 0 }}
                 />
-                <span style={{ fontSize: '12px', color: 'rgb(255,255,255)', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0 }}>
+                <span style={{ fontSize: '14px', color: 'rgb(255,255,255)', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0 }}>
                   {reportData?.workshop?.address || 'Business Address'}
                 </span>
               </div>
 
-              {/* Blue overlapping banner — absolutely covers full height on the left */}
+              {/* Blue overlapping banner */}
               <div
                 style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   height: '100%',
-                  width: '32%',
+                  width: '34%',
                   backgroundColor: 'rgb(23, 113, 183)',
                   clipPath: 'polygon(0 0, 80% 0, 95% 100%, 0 100%)',
-                  paddingLeft: '1.25rem',
+                  paddingLeft: '1.5rem',
                   paddingRight: '1rem',
                   display: 'flex',
                   flexDirection: 'column',
@@ -521,10 +518,10 @@ export default function Reports() {
                   boxSizing: 'border-box',
                 }}
               >
-                <span style={{ fontSize: '9px', color: 'rgb(255,255,255)', fontWeight: 'bold', lineHeight: '1.4', whiteSpace: 'nowrap' }}>{t.footerText1}</span>
-                <span style={{ fontSize: '9px', color: 'rgb(255,255,255)', fontWeight: 'bold', lineHeight: '1.4', whiteSpace: 'nowrap' }}>{t.footerText2}</span>
-                <span style={{ fontSize: '9px', color: 'rgb(255,255,255)', fontWeight: 'bold', lineHeight: '1.4', whiteSpace: 'nowrap' }}>{t.footerText3}</span>
-                <span style={{ fontSize: '9px', color: 'rgb(255,255,255)', fontWeight: 'bold', lineHeight: '1.4', whiteSpace: 'nowrap' }}>{t.footerText4}</span>
+                <span style={{ fontSize: '12px', color: 'rgb(255,255,255)', lineHeight: '1.2', whiteSpace: 'nowrap', fontWeight: '700' }}>{t.footerText1}</span>
+                <span style={{ fontSize: '12px', color: 'rgb(255,255,255)', lineHeight: '1.2', whiteSpace: 'nowrap', fontWeight: '700' }}>{t.footerText2}</span>
+                <span style={{ fontSize: '12px', color: 'rgb(255,255,255)', lineHeight: '1.2', whiteSpace: 'nowrap', fontWeight: '700' }}>{t.footerText3}</span>
+                <span style={{ fontSize: '12px', color: 'rgb(255,255,255)', lineHeight: '1.2', whiteSpace: 'nowrap', fontWeight: '700' }}>{t.footerText4}</span>
               </div>
             </div>
           </div>
