@@ -1,6 +1,4 @@
 "use client";
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import React from 'react';
@@ -59,6 +57,18 @@ const translations = {
     footerText4: '- تقرير سنوي - والمزيد',
   },
 };
+
+import dynamic from 'next/dynamic';
+
+const PDFDownloadLink = dynamic(
+  () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
+  { ssr: false }
+);
+
+const ReportsDocument = dynamic(
+  () => import('./ReportsDocument'),
+  { ssr: false }
+);
 
 export default function Reports() {
   const searchParams = useSearchParams();
@@ -121,118 +131,37 @@ export default function Reports() {
     ? calculateDuration(reportData.range.start, reportData.range.end)
     : 0;
 
-  // Improved PDF generation with complete color conversion
-  const handleDownloadPDF = async () => {
-    const element = reportRef.current;
-    if (!element) {
-      return null;
-    }
+  const [isGenerating, setIsGenerating] = React.useState(false);
+
+  const handleDownload = async () => {
+    if (!reportData) return;
+    setIsGenerating(true);
     try {
-      const images = element.querySelectorAll('img');
-      await Promise.all(
-        Array.from(images).map((img) => {
-          if ((img as HTMLImageElement).complete) return Promise.resolve();
-          return new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-          });
-        })
-      );
-      // Wait for fonts to load
-      if (document.fonts) {
-        await document.fonts.ready;
-      }
+      const { pdf } = await import('@react-pdf/renderer');
+      const ReportsDocument = (await import('./ReportsDocument')).default;
 
-      // Small delay to ensure everything is rendered
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const blob = await pdf(
+        <ReportsDocument
+          reportData={reportData}
+          t={t}
+          duration={duration}
+          formatDate={formatDateToDDMMYYYY}
+        />
+      ).toBlob();
 
-      const canvas = await html2canvas(element, {
-        backgroundColor: "#ffffff",
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        imageTimeout: 0,
-        logging: false,
-        windowWidth: 1024,
-        windowHeight: element.scrollHeight,
-        onclone: (clonedDoc: Document) => {
-          const clonedElement = clonedDoc.querySelector('[data-pdf-report]') as HTMLElement;
-          if (!clonedElement) return;
-
-          // Preserve native rendered styles instead of forcing A4 dimensions
-          clonedElement.style.margin = '0 auto';
-          clonedElement.style.padding = '1.5rem';
-
-          const allElements = clonedDoc.querySelectorAll("*");
-          allElements.forEach((el) => {
-            const htmlEl = el as HTMLElement;
-            try {
-              // ── Color safety (inline rgb() colors are fine; Tailwind oklch needs override) ──
-              const cs = getComputedStyle(htmlEl);
-              if (cs.color && (cs.color.includes('oklch') || cs.color.includes('lab'))) {
-                if (htmlEl.className.includes('text-white')) htmlEl.style.color = 'rgb(255,255,255)';
-                else htmlEl.style.color = 'rgb(0,0,0)';
-              }
-              if (cs.backgroundColor && (cs.backgroundColor.includes('oklch') || cs.backgroundColor.includes('lab'))) {
-                htmlEl.style.backgroundColor = 'transparent';
-              }
-
-              // ── Images ──
-              // Removed aggressive maxWidth to preserve natural icon sizes
-              if (htmlEl.tagName === 'IMG' && htmlEl.className.includes('object-contain')) {
-                htmlEl.style.maxWidth = '100%';
-                htmlEl.style.height = 'auto';
-              }
-            } catch (err) {
-              console.warn('Error processing element:', err);
-            }
-          });
-
-          // Swap footers
-          const screenFooter = clonedDoc.querySelector('[data-footer-section]') as HTMLElement;
-          const pdfFooter = clonedDoc.querySelector('[data-pdf-footer]') as HTMLElement;
-          if (screenFooter) screenFooter.style.display = 'none';
-          if (pdfFooter) pdfFooter.style.display = 'block';
-        },
-      });
-
-      const imgData = canvas.toDataURL("image/png", 1.0);
-
-      // A4 dimensions
-      const pageWidth = 210;
-      const pageHeight = 297;
-
-      // Calculate dimensions
-      const imgWidthPx = canvas.width;
-      const imgHeightPx = canvas.height;
-      const aspectRatio = imgHeightPx / imgWidthPx;
-
-      const margin = 10;
-      const contentWidth = pageWidth - (2 * margin);
-      const contentHeight = contentWidth * aspectRatio;
-
-      let pdfWidth = contentWidth;
-      let pdfHeight = contentHeight;
-
-      if (contentHeight > pageHeight - (2 * margin)) {
-        pdfHeight = pageHeight - (2 * margin);
-        pdfWidth = pdfHeight / aspectRatio;
-      }
-
-      const marginX = (pageWidth - pdfWidth) / 2;
-      const marginY = (pageHeight - pdfHeight) / 2;
-
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-      pdf.addImage(imgData, "PNG", marginX, marginY, pdfWidth, pdfHeight, undefined, 'FAST');
-      pdf.save("report.pdf");
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF. Please try again.");
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = "report.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error("PDF Generation error:", error);
+      alert("PDF Generation Failed: " + (error?.message || "Unknown error"));
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -249,13 +178,15 @@ export default function Reports() {
       {/* Sticky download bar — does NOT overlap content */}
       <div className='no-print sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm'>
         <div className='max-w-4xl mx-auto px-3 sm:px-6 py-2.5 flex justify-end'>
-          <button
-            className='border border-gray-300 text-sm cursor-pointer px-4 sm:px-6 py-2 shadow-sm hover:shadow-md hover:border-gray-400 bg-white rounded transition-all duration-200 active:scale-95'
-            onClick={handleDownloadPDF}
-            type='button'
-          >
-            {t.downloadPdf}
-          </button>
+          {reportData && (
+            <button
+              onClick={handleDownload}
+              disabled={isGenerating}
+              className='border border-gray-300 text-sm cursor-pointer px-4 sm:px-6 py-2 shadow-sm hover:shadow-md hover:border-gray-400 bg-white rounded transition-all duration-200 active:scale-95 disabled:opacity-50'
+            >
+              {isGenerating ? 'Generating...' : t.downloadPdf}
+            </button>
+          )}
         </div>
       </div>
       <div className='p-2 sm:p-4 md:p-6'>
